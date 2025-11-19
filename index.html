@@ -253,7 +253,7 @@
     const SUPABASE_URL = 'https://ogpfsufgqyrlmpsybulm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZzdWZncXlybG1wc3lidWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NDE2NjksImV4cCI6MjA3OTExNzY2OX0.rLblkO4T5kaTQ7NTKZEocBdObMlHE4e_tVNuGSnwfZ8'; 
     
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // ===========================================================
 
     const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
@@ -743,4 +743,5 @@
     }
   </script>
 </body>
+
 </html>
