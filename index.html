@@ -293,34 +293,49 @@
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         const btn = document.getElementById('auth-submit-btn');
-        const oldText = btn.innerText;
-        btn.innerText = "Cargando...";
+        const oldText = btn.innerText; // Guardamos el texto original ("Entrar")
         
-        if(!email || !password) { alert("Faltan datos"); btn.innerText=oldText; return; }
+        if(!email || !password) { alert("Por favor, rellena email y contraseña"); return; }
 
-        let res;
-        if(isLogin) {
-            res = await supabase.auth.signInWithPassword({email, password});
-        } else {
-            // Importante: emailRedirectTo es clave para evitar errores si la config de Supabase lo pide
-            res = await supabase.auth.signUp({
-                email, 
-                password,
-                options: { emailRedirectTo: window.location.href } 
-            });
-        }
+        // Cambiamos botón a cargando
+        btn.innerText = "Conectando...";
+        btn.disabled = true; // Evitar doble clic
 
-        if(res.error) {
-            alert(res.error.message);
-            btn.innerText=oldText;
-        } else {
-            // Chequear si el registro requiere confirmación de email
-            if (!isLogin && res.data.user && !res.data.session) {
-                alert("✅ Registro exitoso.\n\nTe hemos enviado un correo de verificación.\nPor favor, revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.");
-                btn.innerText = oldText;
+        try {
+            let res;
+            // IMPORTANTE: Verificar que supabase está cargado
+            if (!window.supabase) throw new Error("La librería de Supabase no se ha cargado. Revisa tu conexión o bloqueadores de anuncios.");
+
+            if(isLogin) {
+                res = await supabase.auth.signInWithPassword({email, password});
             } else {
+                // Al registrarse, desactivamos explícitamente la espera de email por si acaso
+                res = await supabase.auth.signUp({
+                    email, 
+                    password,
+                    options: { emailRedirectTo: window.location.href } // Ayuda a redirigir bien
+                });
+            }
+
+            if(res.error) {
+                throw new Error(res.error.message); // Lanzar error para que lo pille el catch
+            } 
+
+            // Si llegamos aquí, todo ha ido bien
+            // Si es registro y no hay sesión (caso raro con confirmación desactivada), avisamos
+            if (!isLogin && res.data.user && !res.data.session) {
+                alert("Registro realizado. Si no entras automáticamente, intenta iniciar sesión.");
+                window.location.reload();
+            } else {
+                // ÉXITO: Cargamos la app
                 loadAppState();
             }
+
+        } catch (e) {
+            console.error(e); // Para ver en F12
+            alert("Error: " + e.message);
+            btn.innerText = oldText; // Restaurar botón
+            btn.disabled = false;
         }
     }
 
@@ -761,5 +776,6 @@
   </script>
 </body>
 </html>
+
 
 
