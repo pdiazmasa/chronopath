@@ -40,9 +40,8 @@
     .login-btn:hover { background: #0056b3; }
     .auth-link { color: #007bff; cursor: pointer; font-size: 0.9rem; text-decoration: none; display: block; margin-top: 15px; }
 
-    /* APP CONTAINER */
+    /* CONTENEDOR PRINCIPAL */
     #app-container { display: none; width: 100%; height: 100%; position: relative; }
-    
     #map { height: 100%; width: 100%; z-index: 1; background: #aadaff; }
 
     /* PANEL LATERAL */
@@ -99,7 +98,7 @@
     input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; outline: none; }
     input:focus, select:focus { border-color: #007bff; }
 
-    /* BOTONES COLORES */
+    /* BOTONES DE COLOR */
     .btn-main-tab {
         width: 100%; padding: 12px; border: none; border-radius: 8px;
         font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 10px;
@@ -107,20 +106,17 @@
         display: flex; justify-content: center; align-items: center; gap: 8px;
     }
     .btn-main-tab:active { transform: scale(0.98); }
-
-    .btn-blue { background-color: #007bff; color: white; }
-    .btn-blue:hover { background-color: #0056b3; }
-    .btn-yellow { background-color: #ffc107; color: #333; }
-    .btn-yellow:hover { background-color: #e0a800; }
-    .btn-green { background-color: #2ecc71; color: white; }
-    .btn-green:hover { background-color: #27ae60; }
+    
+    .btn-blue { background-color: #007bff; color: white; } .btn-blue:hover { background-color: #0056b3; }
+    .btn-yellow { background-color: #ffc107; color: #333; } .btn-yellow:hover { background-color: #e0a800; }
+    .btn-green { background-color: #2ecc71; color: white; } .btn-green:hover { background-color: #27ae60; }
     
     .btn-primary { background-color: #007bff; color: white; width: auto; }
     .btn-action { background-color: #6c757d; color: white; font-weight: 600; font-size: 0.85rem; padding: 8px; width: auto;}
     .btn-danger-block { background-color: #dc3545; color: white; width: 100%; font-weight: bold; margin-top: 10px; padding: 12px; border-radius: 6px;}
     .btn-del { background: #ffdede; color: #d00; border:none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;}
     
-    /* Botón Eliminar en Timeline */
+    /* Botón Eliminar Timeline */
     .btn-timeline-del { 
         background: transparent; border: 1px solid #999; color: #888; 
         font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; 
@@ -128,9 +124,12 @@
     }
     .btn-timeline-del:hover { color: #ff4444; border-color: #ff4444; opacity: 1; }
 
-    /* OTROS */
+    /* ELEMENTOS DE INTERFAZ */
     details { background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; padding: 8px; margin-top: 8px; }
     summary { cursor: pointer; font-weight: 600; color: #444; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center;}
+    summary::after { content: "▼"; font-size: 0.7em; color: #999; }
+    details[open] summary::after { content: "▲"; }
+
     .scroll-list { max-height: 150px; overflow-y: auto; margin: 5px 0 0 0; padding: 0; list-style: none; }
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
     .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; color: #333; }
@@ -142,7 +141,7 @@
     .modal-body { flex: 1; overflow-y: auto; padding: 20px; width: 100%; box-sizing: border-box; }
     .chart-container { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
 
-    /* TIMELINE */
+    /* TIMELINE DISEÑO */
     .timeline-wrapper { position: relative; max-width: 600px; margin: 0 auto; padding-left: 30px; padding-bottom: 80px; color: #fff; }
     .timeline-wrapper::before { content: ''; position: absolute; top: 15px; bottom: 0; left: 6px; width: 2px; background: #444; }
     .timeline-year-block { margin-bottom: 30px; }
@@ -157,6 +156,7 @@
     #loader { display: none; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+    /* RESPONSIVE MÓVIL */
     @media (max-width: 600px) {
       #controls { width: 90%; left: 5%; top: 10px; border-radius: 16px; }
       #panel-content { padding: 15px; }
@@ -181,8 +181,8 @@
       
       <div id="top-right-tools" data-html2canvas-ignore="true">
           <button class="btn-tool" onclick="undoAction()" title="Deshacer último cambio"><span>↩</span> <span>Deshacer</span></button>
-          <button class="btn-tool" onclick="saveToCloud()" title="Guardar cambios en la nube"><span>☁</span> <span>Guardar</span></button>
-          <button class="btn-tool" onclick="exportMapImage()" title="Descargar imagen"><span>📷</span> <span>Foto</span></button>
+          <button class="btn-tool" onclick="saveToCloud()" title="Guardar en la Nube"><span>☁</span> <span>Guardar</span></button>
+          <button class="btn-tool" onclick="exportMapImage()" title="Descargar imagen del mapa"><span>📷</span> <span>Foto</span></button>
           <button class="btn-tool" onclick="logoutUser()" title="Cerrar Sesión" style="color:#d00;"><span>🚪</span></button>
       </div>
 
@@ -233,8 +233,11 @@
 
             <details>
                 <summary>⚙️ Opciones</summary>
-                <div class="input-group" style="margin-top:10px;"><label>Tamaño de Puntos: <span id="pointSizeLabel">5</span></label><input type="range" id="pointSizeSlider" min="2" max="15" value="5" oninput="updatePointSize(this.value)"></div>
-                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><label style="color:#444; font-weight:bold;">Gestión Manual de Países</label><label style="font-size:0.8rem; margin-top:5px;">Añadir</label><div style="display:flex; gap:5px;"><input type="text" id="manualCountryInput" list="listCountries" placeholder="País..." style="flex:1;"><button class="btn-action" style="background:#28a745;" onclick="manualAddCountry()">+</button></div><label style="font-size:0.8rem; margin-top:10px; display:block;">Eliminar</label><div style="display:flex; gap:5px;"><select id="manualDeleteSelect" style="flex:1;"><option>Selecciona país...</option></select><button class="btn-del" onclick="manualDeleteCountry()">🗑️</button></div></div>
+                <div class="input-group" style="margin-top:10px;"><label>Tamaño Puntos: <span id="pointSizeLabel">5</span></label><input type="range" id="pointSizeSlider" min="2" max="15" value="5" oninput="updatePointSize(this.value)"></div>
+                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><label style="color:#444; font-weight:bold;">Gestión Manual de Países</label>
+                    <div style="margin-top:5px; display:flex; gap:5px;"><input type="text" id="manualCountryInput" list="listCountries" placeholder="Añadir País..." style="flex:1;"><button class="btn-action" style="background:#28a745;" onclick="manualAddCountry()">+</button></div>
+                    <div style="margin-top:10px; display:flex; gap:5px;"><select id="manualDeleteSelect" style="flex:1;"><option>Eliminar País...</option></select><button class="btn-del" onclick="manualDeleteCountry()">🗑️</button></div>
+                </div>
                 <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><button class="btn-danger-block" onclick="factoryReset()">⚠ Reiniciar de Fábrica</button></div>
                 <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><button class="btn-action" style="width:100%;" onclick="exportJSON()">⬇ Copia de Seguridad (JSON)</button></div>
             </details>
@@ -243,23 +246,16 @@
       <div id="map"></div>
   </div>
 
-  <script id="saved-data" type="application/json"></script>
-
   <script>
     // ===========================================================
-    // 1. CONFIGURACIÓN DE SUPABASE (¡CLAVES CORRECTAS)
+    // 1. CREDENCIALES (PEGA AQUÍ TUS CLAVES REALES)
     // ===========================================================
     const SUPABASE_URL = 'https://ogpfsufgqyrlmpsybulm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZzdWZncXlybG1wc3lidWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NDE2NjksImV4cCI6MjA3OTExNzY2OX0.rLblkO4T5kaTQ7NTKZEocBdObMlHE4e_tVNuGSnwfZ8'; 
     // ===========================================================
 
+    // VARIABLES GLOBALES
     let map;
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
-    const UN_MEMBERS = ["AFG","ALB","DZA","AND","AGO","ATG","ARG","ARM","AUS","AUT","AZE","BHS","BHR","BGD","BRB","BLR","BEL","BLZ","BEN","BTN","BOL","BIH","BWA","BRA","BRN","BGR","BFA","BDI","CPV","KHM","CMR","CAN","CAF","TCD","CHL","CHN","COL","COM","COG","COD","CRI","CIV","HRV","CUB","CYP","CZE","PRK","DNK","DJI","DMA","DOM","ECU","EGY","SLV","GNQ","ERI","EST","SWZ","ETH","FJI","FIN","FRA","GAB","GMB","GEO","DEU","GHA","GRC","GDN","GTM","GIN","GNB","GUY","HTI","HND","HUN","ISL","IND","IDN","IRN","IRQ","IRL","ISR","ITA","JAM","JPN","JOR","KAZ","KEN","KIR","KWT","KGZ","LAO","LVA","LBN","LSO","LBR","LBY","LIE","LTU","LUX","MDG","MWI","MYS","MDV","MLI","MLT","MHL","MRT","MUS","MEX","FSM","MCO","MNG","MNE","MAR","MOZ","MMR","NAM","NRU","NPL","NLD","NZL","NIC","NER","NGA","MKD","NOR","OMN","PAK","PLW","PAN","PNG","PRY","PER","PHL","POL","PRT","QAT","KOR","MDA","ROU","RUS","RWA","KNA","LCA","VCT","WSM","SMR","STP","SAU","SEN","SRB","SYC","SLE","SGP","SVK","SVN","SLB","SOM","ZAF","SSD","ESP","LKA","SDN","SUR","SWE","CHE","SYR","TJK","THA","TLS","TGO","TON","TTO","TUN","TUR","TKM","TUV","UGA","UKR","ARE","GBR","TZA","USA","URY","UZB","VUT","VEN","VNM","YEM","ZMB","ZWE"];
-    const monthNames = ["En", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    
     let appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
     let geoJsonLayer;
     let cityMarkers = [];
@@ -269,57 +265,26 @@
     let countryContinents = {}; 
     let myChartYears, myChartContinents;
 
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
+    const UN_MEMBERS = ["AFG","ALB","DZA","AND","AGO","ATG","ARG","ARM","AUS","AUT","AZE","BHS","BHR","BGD","BRB","BLR","BEL","BLZ","BEN","BTN","BOL","BIH","BWA","BRA","BRN","BGR","BFA","BDI","CPV","KHM","CMR","CAN","CAF","TCD","CHL","CHN","COL","COM","COG","COD","CRI","CIV","HRV","CUB","CYP","CZE","PRK","DNK","DJI","DMA","DOM","ECU","EGY","SLV","GNQ","ERI","EST","SWZ","ETH","FJI","FIN","FRA","GAB","GMB","GEO","DEU","GHA","GRC","GDN","GTM","GIN","GNB","GUY","HTI","HND","HUN","ISL","IND","IDN","IRN","IRQ","IRL","ISR","ITA","JAM","JPN","JOR","KAZ","KEN","KIR","KWT","KGZ","LAO","LVA","LBN","LSO","LBR","LBY","LIE","LTU","LUX","MDG","MWI","MYS","MDV","MLI","MLT","MHL","MRT","MUS","MEX","FSM","MCO","MNG","MNE","MAR","MOZ","MMR","NAM","NRU","NPL","NLD","NZL","NIC","NER","NGA","MKD","NOR","OMN","PAK","PLW","PAN","PNG","PRY","PER","PHL","POL","PRT","QAT","KOR","MDA","ROU","RUS","RWA","KNA","LCA","VCT","WSM","SMR","STP","SAU","SEN","SRB","SYC","SLE","SGP","SVK","SVN","SLB","SOM","ZAF","SSD","ESP","LKA","SDN","SUR","SWE","CHE","SYR","TJK","THA","TLS","TGO","TON","TTO","TUN","TUR","TKM","TUV","UGA","UKR","ARE","GBR","TZA","USA","URY","UZB","VUT","VEN","VNM","YEM","ZMB","ZWE"];
+    const monthNames = ["En", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
     function norm(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
-    // --- FUNCIONES CORE ---
-
-    async function loadAppState() {
-        const user = (await window.supabaseClient.auth.getUser()).data.user;
-        if (!user) return;
-
-        document.getElementById('login-screen').style.display='none';
-        document.getElementById('app-container').style.display='block';
-        if(map) map.invalidateSize();
-
-        const { data, error } = await window.supabaseClient.from('mapa_data').select('data').eq('user_id', user.id).single();
-        
-        if(data && data.data) {
-            appState = data.data;
-        } else {
-            appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
-        }
-
-        appState.countries = appState.countries || {};
-        appState.cities = appState.cities || [];
-        appState.trips = appState.trips || [];
-        appState.pointSize = appState.pointSize || 5;
-
-        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
-        document.getElementById('pointSizeSlider').value = appState.pointSize;
-        document.getElementById('pointSizeLabel').innerText = appState.pointSize;
-        
-        if(geoJsonLayer) geoJsonLayer.setStyle(styleFeature);
-        cityMarkers.forEach(m => map.removeLayer(m.marker));
-        cityMarkers=[];
-        restoreCities();
-        renderManageCities();
-        renderManualDeleteList();
-        updateStats(); 
-    }
-
-    // --- INICIALIZACIÓN DE LA APLICACIÓN ---
-
+    // INICIALIZACIÓN
     document.addEventListener('DOMContentLoaded', () => {
-        if (typeof window.supabase === 'undefined') { alert("Error crítico: Librería Supabase no cargada."); return; }
+        if (typeof window.supabase === 'undefined') { alert("Error: Librería Supabase no cargada."); return; }
         
-        window.supabaseClient = supabase;
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // MAPA
         document.getElementById('map').innerHTML = '';
         map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([40, -3], 2);
         L.control.zoom({ position: 'topleft' }).addTo(map); 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO', subdomains: 'abcd', maxZoom: 19, crossOrigin: true }).addTo(map);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, zIndex: 1000, crossOrigin: true }).addTo(map);
 
+        // GEOJSON
         fetch(GEOJSON_URL).then(res => res.json()).then(data => {
             data.features.forEach(f => {
                 const i3 = f.properties.ISO_A3 || f.properties.ADM0_A3;
@@ -332,22 +297,51 @@
 
             populateCountryList(data);
             geoJsonLayer = L.geoJSON(data, { style: styleFeature, onEachFeature: (f, l) => l.bindTooltip(getSpanishName(f.properties.ISO_A2, f.properties.NAME), {sticky:true, direction:'center', className:'country-tooltip'}) }).addTo(map);
-            document.getElementById('map-loading-overlay').style.display = 'none';
-
-            window.supabaseClient.auth.onAuthStateChange((ev, session) => {
+            
+            // CHECK SESSION
+            window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
                 if(session) loadAppState();
                 else document.getElementById('login-screen').style.display='flex';
             });
-            
-            window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
-               if(!session) document.getElementById('login-screen').style.display='flex';
-               else loadAppState();
-            });
 
-        }).catch(err => console.error("Error cargando mapa", err));
+            window.supabaseClient.auth.onAuthStateChange((ev, session) => {
+                if(session) loadAppState();
+                else {
+                   document.getElementById('app-container').style.display='none';
+                   document.getElementById('login-screen').style.display='flex';
+                }
+            });
+        }).catch(console.error);
     });
 
-    // --- FUNCIONES AUTH & DATOS ---
+    // --- FUNCIONES AUTH ---
+    async function loadAppState() {
+        const user = (await window.supabaseClient.auth.getUser()).data.user;
+        if (!user) return;
+
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('app-container').style.display='block';
+        if(map) map.invalidateSize();
+
+        const { data, error } = await window.supabaseClient.from('mapa_data').select('data').eq('user_id', user.id).single();
+        if(data && data.data) appState = data.data;
+        else appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
+
+        // Validar
+        appState.countries = appState.countries || {};
+        appState.cities = appState.cities || [];
+        appState.trips = appState.trips || [];
+        appState.pointSize = appState.pointSize || 5;
+        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
+
+        document.getElementById('pointSizeSlider').value = appState.pointSize;
+        document.getElementById('pointSizeLabel').innerText = appState.pointSize;
+        if(geoJsonLayer) geoJsonLayer.setStyle(styleFeature);
+        cityMarkers.forEach(m => map.removeLayer(m.marker));
+        cityMarkers=[];
+        restoreCities();
+        renderManageCities(); renderManualDeleteList(); updateStats(); 
+    }
 
     function toggleAuthMode() {
         const t = document.getElementById('auth-title');
@@ -368,34 +362,13 @@
         const btn = document.getElementById('auth-submit-btn');
         const oldText = btn.innerText;
         btn.innerText = "Cargando...";
-        
         if(!email || !password) { alert("Faltan datos"); btn.innerText=oldText; return; }
-
-        let res;
         try {
+            let res;
             if(isLogin) res = await window.supabaseClient.auth.signInWithPassword({email, password});
             else res = await window.supabaseClient.auth.signUp({email, password});
-
-            if(res.error) {
-                // Si la contraseña es débil o hay otro error manejado por Supabase
-                alert("Error de autenticación: " + res.error.message);
-                btn.innerText = oldText;
-            } else {
-                // Si llega aquí sin error, el proceso de Auth ha iniciado correctamente
-                if(!isLogin && res.data.user && !res.data.session) {
-                    // Caso de registro con confirmación de email activada
-                    alert("✅ Registro exitoso.\n\nTe hemos enviado un correo de verificación.");
-                    btn.innerText = oldText;
-                } else {
-                    // Login exitoso o registro con auto-login (onAuthStateChange maneja la carga)
-                }
-            }
-        } catch(e) { 
-            // Esto captura errores de red o errores internos del cliente Supabase
-            console.error("Network/Client Error:", e);
-            alert("Error de conexión. Asegúrate de que tu URL esté listada en la configuración de CORS en Supabase."); 
-            btn.innerText = oldText; 
-        }
+            if(res.error) { alert(res.error.message); btn.innerText=oldText; }
+        } catch(e) { alert("Error conexión"); btn.innerText=oldText; }
     }
 
     async function logoutUser() { await window.supabaseClient.auth.signOut(); location.reload(); }
@@ -403,19 +376,15 @@
     async function saveToCloud() {
         const user = (await window.supabaseClient.auth.getUser()).data.user;
         if (!user) return;
-        
         const btn = document.querySelector('#top-right-tools button:nth-child(2)');
         const old = btn.innerHTML;
         btn.innerHTML = '<span>☁</span> <span>...</span>';
-
         const { error } = await window.supabaseClient.from('mapa_data').upsert([{ user_id: user.id, data: appState }]);
-        
-        if(error) alert("Error al guardar: " + error.message);
-        else { setTimeout(() => btn.innerHTML = old, 1000); }
+        if(error) alert("Error: " + error.message);
+        else setTimeout(() => btn.innerHTML = old, 1000);
     }
 
-    // --- FIN LÓGICA AUTH ---
-
+    // --- UI ---
     function togglePanel() { document.getElementById('controls').classList.toggle('collapsed'); }
     function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -427,6 +396,7 @@
     }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+    // --- MAPA HELPERS ---
     function getSpanishName(iso, fb) { if(!iso||iso==="-99") return fb; try { return regionNames.of(iso); } catch(e){ return fb; } }
     function getSovereignId(f) { return f.properties.ADM0_A3 || f.properties.ISO_A3; }
     function styleFeature(f) {
@@ -434,51 +404,21 @@
         const c = appState.countries[id];
         return { fillColor: c || '#fff', weight: 1, opacity: 1, color: '#999', fillOpacity: c ? 0.7 : 0 };
     }
-
     function createCityMarker(c) {
         const m = L.circleMarker([c.lat, c.lng], { color: 'red', fillColor: '#f00', fillOpacity: 1, radius: appState.pointSize, weight: 1 }).addTo(map);
         m.bindTooltip(c.name, { direction: 'top', offset: [0, -5] });
         cityMarkers.push({ data: c, marker: m });
     }
     function restoreCities() { appState.cities.forEach(c => createCityMarker(c)); }
-
-    let searchTimeout;
-    function debounceCitySearch() {
-      const q = document.getElementById('inputCity').value;
-      if(q.length < 3) return;
-      document.getElementById('loader').style.display = 'block';
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&accept-language=es&q=${encodeURIComponent(q)}`)
-          .then(r => r.json()).then(data => {
-             const l = document.getElementById('listCities'); l.innerHTML = '';
-             data.forEach(i => {
-                 if(['administrative','place','city','town'].includes(i.type) || i.class==='place') {
-                     const opt = document.createElement('option');
-                     let txt = i.name;
-                     const c = i.address?.country || "";
-                     const r = i.address?.state || i.address?.region || "";
-                     if(r) txt+= `, ${r}`; if(c) txt+= `, ${c}`;
-                     opt.value = txt;
-                     opt.setAttribute('data-lat', i.lat); opt.setAttribute('data-lon', i.lon);
-                     opt.setAttribute('data-c', c); opt.setAttribute('data-n', i.name);
-                     l.appendChild(opt);
-                 }
-             });
-          }).finally(() => document.getElementById('loader').style.display = 'none');
-      }, 600);
-    }
-
+    
+    // --- ADD/REMOVE ---
     function addCity() {
         const val = document.getElementById('inputCity').value;
         const list = document.getElementById('listCities');
         let sel;
         for(let o of list.options) if(norm(o.value) === norm(val)) sel = o;
         if(!sel) return; 
-        const cData = {
-            name: sel.getAttribute('data-n'), lat: parseFloat(sel.getAttribute('data-lat')),
-            lng: parseFloat(sel.getAttribute('data-lon')), country: sel.getAttribute('data-c')
-        };
+        const cData = { name: sel.getAttribute('data-n'), lat: parseFloat(sel.getAttribute('data-lat')), lng: parseFloat(sel.getAttribute('data-lon')), country: sel.getAttribute('data-c') };
         appState.cities.push(cData);
         appState.history.push({ type: 'city', index: appState.cities.length - 1 });
         createCityMarker(cData);
@@ -492,12 +432,10 @@
         let id = null, name = val;
         for(let o of list.options) if(norm(o.value) === norm(val)) { id = o.getAttribute('data-id'); name=o.value; break; }
         if(!id) return; 
-        
         const m = parseInt(document.getElementById('inputTripMonth').value);
         const y = parseInt(document.getElementById('inputTripYear').value);
         const tripObj = { id, name, month:m, year:y, tripId: Date.now() };
         appState.trips.push(tripObj);
-        
         let createdCountry = false;
         if(!appState.countries[id]) {
              const hue = Math.floor(Math.random()*300)+30;
@@ -511,12 +449,37 @@
         document.getElementById('inputTripCountry').value = '';
     }
 
+    function undoAction() {
+        const last = appState.history.pop();
+        if(!last) return;
+        if(last.type === 'city') {
+             const m = cityMarkers.pop();
+             if(m) map.removeLayer(m.marker);
+             appState.cities.pop();
+             renderManageCities();
+        } else if(last.type === 'country') {
+             delete appState.countries[last.id];
+             geoJsonLayer.resetStyle();
+             renderManualDeleteList();
+        } else if(last.type === 'trip') {
+            const idx = appState.trips.findIndex(t => t.tripId === last.tripObj.tripId);
+            if (idx !== -1) appState.trips.splice(idx, 1);
+            if(last.createdCountry) {
+                delete appState.countries[last.tripObj.id];
+                geoJsonLayer.resetStyle();
+                renderManualDeleteList();
+            }
+            if(document.getElementById('timeline-modal').style.display === 'flex') renderTimeline();
+        }
+        updateStats();
+    }
+
+    // --- TIMELINE ---
     function openTimeline() { renderTimeline(); document.getElementById('timeline-modal').style.display = 'flex'; }
-    
     function renderTimeline() {
         const c = document.getElementById('timeline-container'); c.innerHTML = '';
         if(appState.trips.length===0) { c.innerHTML='<div style="text-align:center;margin-top:50px;color:#777">Sin viajes.</div>'; return; }
-
+        
         const displayTrips = [...appState.trips].sort((a, b) => {
             if (b.year !== a.year) return b.year - a.year; 
             if (b.month !== a.month) return b.month - a.month; 
@@ -553,38 +516,14 @@
             blk.appendChild(ev);
         });
     }
-
     function delTrip(uid) {
         if(!confirm("¿Borrar?")) return;
         const i = appState.trips.findIndex(t => t.tripId === uid);
-        if(i !== -1) {
-            appState.trips.splice(i, 1);
-            renderTimeline(); updateStats();
-        }
+        if(i !== -1) { appState.trips.splice(i, 1); renderTimeline(); updateStats(); }
     }
 
-    async function exportTimelinePDF() {
-        const el = document.getElementById('timeline-container');
-        if(!el || el.innerText.trim()==="") return alert("Nada que exportar");
-        const imgs = el.querySelectorAll('img');
-        await Promise.all(Array.from(imgs).map(async img => {
-            try {
-                const b = await (await fetch(img.src)).blob();
-                return new Promise(r => { const fr=new FileReader(); fr.onloadend=()=>{img.src=fr.result;r()}; fr.readAsDataURL(b); });
-            } catch(e){ return Promise.resolve(); }
-        }));
-        html2canvas(el, { backgroundColor: "#121212", scale: 2, useCORS: true }).then(cvs => {
-            const imgData = cvs.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
-            pdf.setFillColor(18,18,18); pdf.rect(0,0,w,imgH+(m*2),'F');
-            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
-            pdf.save('cronologia.pdf');
-        });
-    }
-
+    // --- STATS & EXPORT ---
     function openStatsModal() { document.getElementById('stats-modal').style.display = 'flex'; renderCharts(); }
-    
     function renderCharts() {
         const years = {}, conts = {}, cityCounts = {};
         appState.trips.forEach(t => years[t.year] = (years[t.year]||0)+1);
@@ -598,67 +537,53 @@
         const sortedCountries = Object.entries(cityCounts).sort((a,b) => b[1] - a[1]);
 
         if(myChartYears) myChartYears.destroy();
-        myChartYears = new Chart(document.getElementById('chartYears'), {
-            type: 'bar',
-            data: { labels: Object.keys(years).sort(), datasets: [{ label: 'Viajes', data: Object.keys(years).sort().map(y=>years[y]), backgroundColor:'#007bff' }] }
-        });
-
+        myChartYears = new Chart(document.getElementById('chartYears'), { type: 'bar', data: { labels: Object.keys(years).sort(), datasets: [{ label: 'Viajes', data: Object.keys(years).sort().map(y=>years[y]), backgroundColor:'#007bff' }] } });
         if(myChartContinents) myChartContinents.destroy();
-        myChartContinents = new Chart(document.getElementById('chartContinents'), {
-            type: 'pie',
-            data: { labels: Object.keys(conts), datasets: [{ data: Object.values(conts), backgroundColor: ['#4bc0c0','#ff6384','#36a2eb','#ffce56','#9966ff','#ff9f40','#c9cbcf'] }] }
-        });
+        myChartContinents = new Chart(document.getElementById('chartContinents'), { type: 'pie', data: { labels: Object.keys(conts), datasets: [{ data: Object.values(conts), backgroundColor: ['#4bc0c0','#ff6384','#36a2eb','#ffce56','#9966ff','#ff9f40','#c9cbcf'] }] } });
 
         const tbody = document.getElementById('citiesTableBody');
         tbody.innerHTML = '';
         if(sortedCountries.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#777;">Sin ciudades</td></tr>';
-        else sortedCountries.forEach(([country, count]) => {
-            tbody.innerHTML += `<tr><td>${country}</td><td style="text-align:right;"><strong>${count}</strong></td>`;
-        });
+        else sortedCountries.forEach(([country, count]) => { tbody.innerHTML += `<tr><td>${country}</td><td style="text-align:right;"><strong>${count}</strong></td></tr>`; });
         
         document.getElementById('stat-total-countries').innerText = Object.keys(appState.countries).length;
         document.getElementById('stat-total-cities').innerText = appState.cities.length;
         document.getElementById('stat-total-trips').innerText = appState.trips.length;
     }
     
-    function exportStatsPDF() {
-        const el = document.getElementById('stats-content'); el.scrollTop = 0;
-        html2canvas(el, { backgroundColor: "#ffffff", scale: 2 }).then(cvs => {
-            const imgData = cvs.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
-            pdf.setFillColor(255,255,255); pdf.rect(0,0,w,imgH+(m*2),'F');
-            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
-            pdf.save('estadisticas.pdf');
-        });
+    // --- AUXILIARES ---
+    let searchTimeout;
+    function debounceCitySearch() {
+      const q = document.getElementById('inputCity').value;
+      if(q.length < 3) return;
+      document.getElementById('loader').style.display = 'block';
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&accept-language=es&q=${encodeURIComponent(q)}`)
+          .then(r => r.json()).then(data => {
+             const l = document.getElementById('listCities'); l.innerHTML = '';
+             data.forEach(i => {
+                 if(['administrative','place','city','town'].includes(i.type) || i.class==='place') {
+                     const opt = document.createElement('option');
+                     let txt = i.name;
+                     const c = i.address?.country || "";
+                     const r = i.address?.state || i.address?.region || "";
+                     if(r) txt+= `, ${r}`; if(c) txt+= `, ${c}`;
+                     opt.value = txt;
+                     opt.setAttribute('data-lat', i.lat); opt.setAttribute('data-lon', i.lon);
+                     opt.setAttribute('data-c', c); opt.setAttribute('data-n', i.name);
+                     l.appendChild(opt);
+                 }
+             });
+          }).finally(() => document.getElementById('loader').style.display = 'none');
+      }, 600);
     }
 
-    function renderManageCities() {
-        const l = document.getElementById('manageCityList'); l.innerHTML = '';
-        const f = document.getElementById('searchManage').value.toLowerCase();
-        if(appState.cities.length===0) { l.innerHTML='<li style="text-align:center;color:#777">Sin ciudades</li>'; return; }
-        appState.cities.forEach((c, i) => {
-            if(norm(`${c.name}, ${c.country}`).includes(norm(f))) {
-                const li = document.createElement('li'); li.className='list-item';
-                li.innerHTML = `<span>${c.name} <small>(${c.country})</small></span> <button class="btn-del btn-xs" onclick="delCity(${i})">Borrar</button>`;
-                l.appendChild(li);
-            }
-        });
-    }
-    function delCity(i) {
-        map.removeLayer(cityMarkers[i].marker);
-        appState.cities.splice(i, 1);
-        cityMarkers.splice(i, 1);
-        renderManageCities();
-        updateStats();
-    }
-    
     function updatePointSize(val) {
         appState.pointSize = val;
         document.getElementById('pointSizeLabel').innerText = val;
         cityMarkers.forEach(obj => obj.marker.setRadius(val));
     }
-
     function renderManualDeleteList() {
         const sel = document.getElementById('manualDeleteSelect');
         sel.innerHTML = '<option value="">Selecciona país...</option>';
@@ -669,7 +594,6 @@
             sel.appendChild(opt);
         });
     }
-    
     function manualAddCountry() {
         const val = document.getElementById('manualCountryInput').value;
         const list = document.getElementById('listCountries');
@@ -686,17 +610,15 @@
         } else alert("País no encontrado.");
         document.getElementById('manualCountryInput').value='';
     }
-
     function manualDeleteCountry() {
         const id = document.getElementById('manualDeleteSelect').value;
-        if(!id) return;
-        if(!confirm("¿SEGURO? Se borrarán todas las ciudades y viajes de este país.")) return;
+        if(!id || !confirm("¿SEGURO?")) return;
         delete appState.countries[id];
         geoJsonLayer.resetStyle();
         appState.trips = appState.trips.filter(t => t.id !== id);
         const selText = document.getElementById('manualDeleteSelect').options[document.getElementById('manualDeleteSelect').selectedIndex].text;
         for(let i=appState.cities.length-1; i>=0; i--) {
-             if(appState.cities[i].country === selText || appState.cities[i].country.includes(selText)) {
+             if(appState.cities[i].country && (appState.cities[i].country === selText || appState.cities[i].country.includes(selText))) {
                  map.removeLayer(cityMarkers[i].marker);
                  appState.cities.splice(i, 1);
                  cityMarkers.splice(i, 1);
@@ -704,7 +626,6 @@
         }
         updateStats(); renderManageCities(); renderManualDeleteList();
     }
-    
     function factoryReset() {
         if(!confirm("¡ATENCIÓN! ¿Borrar TODOS los datos?")) return;
         appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
@@ -715,7 +636,6 @@
         document.getElementById('pointSizeLabel').innerText = 5;
         updateStats(); renderManageCities(); renderManualDeleteList();
     }
-
     function populateCountryList(data) {
       const l = document.getElementById('listCountries');
       const feats = [];
@@ -731,51 +651,45 @@
           if(!seen.has(c.id)){ const o=document.createElement('option'); o.value=c.name; o.setAttribute('data-id',c.id); l.appendChild(o); seen.add(c.id); }
       });
     }
-
-    function updateStats() { if(document.getElementById('stats-modal').style.display==='flex') renderCharts(); }
-
-    function undoAction() {
-        const last = appState.history.pop();
-        if(!last) return;
-        if(last.type === 'city') {
-             const m = cityMarkers.pop();
-             if(m) map.removeLayer(m.marker);
-             appState.cities.pop();
-             renderManageCities();
-        } else if(last.type === 'country') {
-             delete appState.countries[last.id];
-             geoJsonLayer.resetStyle();
-             renderManualDeleteList();
-        } else if(last.type === 'trip') {
-            const idx = appState.trips.findIndex(t => t.tripId === last.tripObj.tripId);
-            if (idx !== -1) appState.trips.splice(idx, 1);
-            if(last.createdCountry) {
-                delete appState.countries[last.tripObj.id];
-                geoJsonLayer.resetStyle();
-                renderManualDeleteList();
-            }
-            if(document.getElementById('timeline-modal').style.display === 'flex') renderTimeline();
-        }
-        updateStats();
-    }
-
-    function saveMap() {
-        try {
-            const json = JSON.stringify(appState, null, 2); 
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'travel_data_backup.json';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch(e) { alert("Error al exportar datos."); }
-    }
     
+    function exportJSON() {
+        const json = JSON.stringify(appState, null, 2); 
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'travel_data_backup.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
     function exportMapImage() {
         const b = event.target; const txt = b.innerText; b.innerText="⏳";
         html2canvas(document.getElementById('map'), {useCORS:true, allowTaint:false}).then(c => {
             const l = document.createElement('a'); l.download='mapa.png'; l.href=c.toDataURL(); l.click(); b.innerText=txt;
+        });
+    }
+    async function exportTimelinePDF() {
+        const el = document.getElementById('timeline-container');
+        const imgs = el.querySelectorAll('img');
+        await Promise.all(Array.from(imgs).map(async img => { try { const b = await (await fetch(img.src)).blob(); return new Promise(r => { const fr=new FileReader(); fr.onloadend=()=>{img.src=fr.result;r()}; fr.readAsDataURL(b); }); } catch(e){ return Promise.resolve(); } }));
+        html2canvas(el, { backgroundColor: "#121212", scale: 2, useCORS: true }).then(cvs => {
+            const imgData = cvs.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
+            pdf.setFillColor(18,18,18); pdf.rect(0,0,w,imgH+(m*2),'F');
+            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
+            pdf.save('cronologia.pdf');
+        });
+    }
+    function exportStatsPDF() {
+        const el = document.getElementById('stats-content'); el.scrollTop = 0;
+        html2canvas(el, { backgroundColor: "#ffffff", scale: 2 }).then(cvs => {
+            const imgData = cvs.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
+            pdf.setFillColor(255,255,255); pdf.rect(0,0,w,imgH+(m*2),'F');
+            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
+            pdf.save('estadisticas.pdf');
         });
     }
   </script>
