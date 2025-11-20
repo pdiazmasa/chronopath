@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <style>
     body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background: #f0f2f5; }
@@ -119,7 +120,7 @@
     .btn-danger-block { background-color: #dc3545; color: white; width: 100%; font-weight: bold; margin-top: 10px; padding: 12px; border-radius: 6px;}
     .btn-del { background: #ffdede; color: #d00; border:none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;}
     
-    /* Botón Eliminar en Timeline (PEQUEÑO Y DISCRETO) */
+    /* Botón Eliminar en Timeline */
     .btn-timeline-del { 
         background: transparent; border: 1px solid #999; color: #888; 
         font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; 
@@ -255,9 +256,59 @@
     // ===========================================================
     const SUPABASE_URL = 'https://ogpfsufgqyrlmpsybulm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZzdWZncXlybG1wc3lidWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NDE2NjksImV4cCI6MjA3OTExNzY2OX0.rLblkO4T5kaTQ7NTKZEocBdObMlHE4e_tVNuGSnwfZ8'; 
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // ===========================================================
+
+    // Declarar 'map' globalmente
+    let map; 
+
+    // Inicialización segura al cargar el DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Verificar que Supabase está cargado
+        if (typeof supabase === 'undefined') {
+           console.error("La librería de Supabase no se ha cargado.");
+           alert("Error crítico: No se pudo cargar el sistema de base de datos.");
+           return;
+        }
+
+        // 2. Inicializar Cliente Supabase
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 3. Inicializar Mapa
+        document.getElementById('map').innerHTML = '';
+        map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([40, -3], 2);
+        L.control.zoom({ position: 'topleft' }).addTo(map); 
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO', subdomains: 'abcd', maxZoom: 19, crossOrigin: true }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, zIndex: 1000, crossOrigin: true }).addTo(map);
+
+        // 4. Cargar GeoJSON de países
+        fetch(GEOJSON_URL).then(res => res.json()).then(data => {
+            data.features.forEach(f => {
+                const i3 = f.properties.ISO_A3 || f.properties.ADM0_A3;
+                const i2 = f.properties.ISO_A2;
+                if(i3 && i2) iso3to2[i3] = i2.toLowerCase();
+                if(i3 && f.properties.CONTINENT) countryContinents[i3] = f.properties.CONTINENT;
+            });
+            iso3to2['FRA']='fr'; iso3to2['NOR']='no';
+            countryContinents['FRA']='Europe'; countryContinents['NOR']='Europe';
+
+            populateCountryList(data);
+            geoJsonLayer = L.geoJSON(data, { style: styleFeature, onEachFeature: (f, l) => l.bindTooltip(getSpanishName(f.properties.ISO_A2, f.properties.NAME), {sticky:true, direction:'center', className:'country-tooltip'}) }).addTo(map);
+            document.getElementById('map-loading-overlay').style.display = 'none';
+
+            // 5. Verificar sesión
+            window.supabaseClient.auth.onAuthStateChange((ev, session) => {
+                if(session) loadAppState();
+                else document.getElementById('login-screen').style.display='flex';
+            });
+            
+            // Check inicial
+            window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
+               if(!session) document.getElementById('login-screen').style.display='flex';
+               else loadAppState();
+            });
+
+        }).catch(err => console.error("Error cargando mapa", err));
+    });
 
     const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
     const UN_MEMBERS = ["AFG","ALB","DZA","AND","AGO","ATG","ARG","ARM","AUS","AUT","AZE","BHS","BHR","BGD","BRB","BLR","BEL","BLZ","BEN","BTN","BOL","BIH","BWA","BRA","BRN","BGR","BFA","BDI","CPV","KHM","CMR","CAN","CAF","TCD","CHL","CHN","COL","COM","COG","COD","CRI","CIV","HRV","CUB","CYP","CZE","PRK","DNK","DJI","DMA","DOM","ECU","EGY","SLV","GNQ","ERI","EST","SWZ","ETH","FJI","FIN","FRA","GAB","GMB","GEO","DEU","GHA","GRC","GDN","GTM","GIN","GNB","GUY","HTI","HND","HUN","ISL","IND","IDN","IRN","IRQ","IRL","ISR","ITA","JAM","JPN","JOR","KAZ","KEN","KIR","KWT","KGZ","LAO","LVA","LBN","LSO","LBR","LBY","LIE","LTU","LUX","MDG","MWI","MYS","MDV","MLI","MLT","MHL","MRT","MUS","MEX","FSM","MCO","MNG","MNE","MAR","MOZ","MMR","NAM","NRU","NPL","NLD","NZL","NIC","NER","NGA","MKD","NOR","OMN","PAK","PLW","PAN","PNG","PRY","PER","PHL","POL","PRT","QAT","KOR","MDA","ROU","RUS","RWA","KNA","LCA","VCT","WSM","SMR","STP","SAU","SEN","SRB","SYC","SLE","SGP","SVK","SVN","SLB","SOM","ZAF","SSD","ESP","LKA","SDN","SUR","SWE","CHE","SYR","TJK","THA","TLS","TGO","TON","TTO","TUN","TUR","TKM","TUV","UGA","UKR","ARE","GBR","TZA","USA","URY","UZB","VUT","VEN","VNM","YEM","ZMB","ZWE"];
@@ -293,70 +344,47 @@
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         const btn = document.getElementById('auth-submit-btn');
-        const oldText = btn.innerText; // Guardamos el texto original ("Entrar")
+        const oldText = btn.innerText;
+        btn.innerText = "Cargando...";
         
-        if(!email || !password) { alert("Por favor, rellena email y contraseña"); return; }
+        if(!email || !password) { alert("Faltan datos"); btn.innerText=oldText; return; }
 
-        // Cambiamos botón a cargando
-        btn.innerText = "Conectando...";
-        btn.disabled = true; // Evitar doble clic
-
+        let res;
         try {
-            let res;
-            // IMPORTANTE: Verificar que supabase está cargado
-            if (!window.supabase) throw new Error("La librería de Supabase no se ha cargado. Revisa tu conexión o bloqueadores de anuncios.");
-
-            if(isLogin) {
-                res = await supabase.auth.signInWithPassword({email, password});
-            } else {
-                // Al registrarse, desactivamos explícitamente la espera de email por si acaso
-                res = await supabase.auth.signUp({
-                    email, 
-                    password,
-                    options: { emailRedirectTo: window.location.href } // Ayuda a redirigir bien
-                });
-            }
-
-            if(res.error) {
-                throw new Error(res.error.message); // Lanzar error para que lo pille el catch
-            } 
-
-            // Si llegamos aquí, todo ha ido bien
-            // Si es registro y no hay sesión (caso raro con confirmación desactivada), avisamos
-            if (!isLogin && res.data.user && !res.data.session) {
-                alert("Registro realizado. Si no entras automáticamente, intenta iniciar sesión.");
-                window.location.reload();
-            } else {
-                // ÉXITO: Cargamos la app
-                loadAppState();
-            }
-
+            if(isLogin) res = await window.supabaseClient.auth.signInWithPassword({email, password});
+            else res = await window.supabaseClient.auth.signUp({email, password});
         } catch (e) {
-            console.error(e); // Para ver en F12
-            alert("Error: " + e.message);
-            btn.innerText = oldText; // Restaurar botón
-            btn.disabled = false;
+            alert("Error de conexión: " + e.message);
+            btn.innerText = oldText;
+            return;
+        }
+
+        if(res.error) {
+            alert("Error de autenticación: " + res.error.message);
+            btn.innerText = oldText;
+        } else {
+            btn.innerText = oldText;
+            // Auth state change will handle load
         }
     }
 
     async function logoutUser() {
-        await supabase.auth.signOut();
+        await window.supabaseClient.auth.signOut();
         location.reload();
     }
 
     async function loadAppState() {
-        const user = (await supabase.auth.getUser()).data.user;
+        const user = (await window.supabaseClient.auth.getUser()).data.user;
         if (!user) { document.getElementById('login-screen').style.display='flex'; return; }
 
         document.getElementById('login-screen').style.display='none';
         document.getElementById('app-container').style.display='block';
         if(map) map.invalidateSize();
 
-        const { data, error } = await supabase.from('mapa_data').select('data').eq('user_id', user.id).single();
+        const { data, error } = await window.supabaseClient.from('mapa_data').select('data').eq('user_id', user.id).single();
         
         if(data && data.data) {
             appState = data.data;
-            // Validar estructura
             if(!appState.countries) appState.countries={};
             if(!appState.cities) appState.cities=[];
             if(!appState.trips) appState.trips=[];
@@ -364,6 +392,7 @@
         }
 
         // Refresh UI
+        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
         document.getElementById('pointSizeSlider').value = appState.pointSize;
         document.getElementById('pointSizeLabel').innerText = appState.pointSize;
         if(geoJsonLayer) geoJsonLayer.setStyle(styleFeature);
@@ -377,14 +406,14 @@
 
     // Guardar en Nube
     async function saveToCloud() {
-        const user = (await supabase.auth.getUser()).data.user;
+        const user = (await window.supabaseClient.auth.getUser()).data.user;
         if (!user) return;
         
         const btn = document.querySelector('#top-right-tools button:nth-child(2)');
         const old = btn.innerHTML;
         btn.innerHTML = '<span>☁</span> <span>...</span>';
 
-        const { error } = await supabase.from('mapa_data').upsert([{ user_id: user.id, data: appState }]);
+        const { error } = await window.supabaseClient.from('mapa_data').upsert([{ user_id: user.id, data: appState }]);
         
         if(error) alert("Error al guardar en nube: " + error.message);
         else {
@@ -392,33 +421,7 @@
         }
     }
 
-    // MAPA
-    document.getElementById('map').innerHTML = '';
-    const map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([40, -3], 2);
-    L.control.zoom({ position: 'topleft' }).addTo(map); 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO', subdomains: 'abcd', maxZoom: 19, crossOrigin: true }).addTo(map);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, zIndex: 1000, crossOrigin: true }).addTo(map);
-
-    fetch(GEOJSON_URL).then(res => res.json()).then(data => {
-        data.features.forEach(f => {
-            const i3 = f.properties.ISO_A3 || f.properties.ADM0_A3;
-            const i2 = f.properties.ISO_A2;
-            if(i3 && i2) iso3to2[i3] = i2.toLowerCase();
-            if(i3 && f.properties.CONTINENT) countryContinents[i3] = f.properties.CONTINENT;
-        });
-        iso3to2['FRA']='fr'; iso3to2['NOR']='no';
-        countryContinents['FRA']='Europe'; countryContinents['NOR']='Europe';
-
-        populateCountryList(data);
-        geoJsonLayer = L.geoJSON(data, { style: styleFeature, onEachFeature: (f, l) => l.bindTooltip(getSpanishName(f.properties.ISO_A2, f.properties.NAME), {sticky:true, direction:'center', className:'country-tooltip'}) }).addTo(map);
-        document.getElementById('map-loading-overlay').style.display = 'none';
-        
-        supabase.auth.onAuthStateChange((ev, session) => {
-            if(session) loadAppState();
-            else document.getElementById('login-screen').style.display='flex';
-        });
-
-    }).catch(console.error);
+    // --- FIN LÓGICA AUTH ---
 
     function togglePanel() { document.getElementById('controls').classList.toggle('collapsed'); }
     function openTab(tabId) {
@@ -776,6 +779,3 @@
   </script>
 </body>
 </html>
-
-
-
