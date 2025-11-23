@@ -370,8 +370,10 @@
   <div id="map" style="position: relative;" tabindex="0"></div>
 
   <script id="saved-data" type="application/json">
-    {"countries": {}, "cities": [], "trips": [], "history": [], "pointSize": 5}
+    {"countries":{"ROU":"hsl(328, 70%, 60%)","EST":"hsl(280, 70%, 60%)","BEL":"hsl(41, 70%, 60%)","GBR":"hsl(235, 70%, 60%)","DEU":"hsl(154, 70%, 60%)","SWE":"hsl(115, 70%, 60%)"},"cities":[{"name":"Bucarest","lat":44.4361414,"lng":26.1027202,"country":"Rumanía","id":1},{"name":"Tallin","lat":59.4372419,"lng":24.7572802,"country":"Estonia","id":2},{"name":"Kloogaranna küla","lat":59.3443557,"lng":24.2585302,"country":"Estonia","id":3},{"name":"Marche-en-Famenne","lat":50.2270943,"lng":5.3419568,"country":"Bélgica","id":4},{"name":"Bruselas","lat":50.8465573,"lng":4.351697,"country":"Bélgica","id":5},{"name":"Londres","lat":51.5074456,"lng":-0.1277653,"country":"Reino Unido","id":6},{"name":"Nordhorn","lat":52.4359731,"lng":7.0707659,"country":"Alemania","id":7},{"name":"Bremen","lat":53.0758196,"lng":8.8071646,"country":"Alemania","id":8},{"name":"Karlstad","lat":59.3809146,"lng":13.5027631,"country":"Suecia","id":9},{"name":"Sarria","lat":42.7641051,"lng":-7.4007679,"country":"España","id":10},{"name":"Portomarín","lat":42.8103267,"lng":-7.6154208,"country":"España","id":11},{"name":"Palas de Rei","lat":42.8804184,"lng":-7.8820424,"country":"España","id":12}],"trips":[{"id":"ROU","name":"Rumanía","month":10,"year":2025,"tripId":1763555920572,"visitOrder":1},{"id":"EST","name":"Estonia","month":6,"year":2022,"tripId":1763556134091,"visitOrder":1},{"id":"BEL","name":"Bélgica","month":7,"year":2022,"tripId":1763556213907,"visitOrder":1},{"id":"GBR","name":"Reino Unido","month":5,"year":2023,"tripId":1763556326739,"visitOrder":1},{"id":"DEU","name":"Alemania","month":9,"year":2019,"tripId":1763556461860,"visitOrder":1},{"id":"SWE","name":"Suecia","month":3,"year":2019,"tripId":1763556881548,"visitOrder":1}],"history":[],"pointSize":5}
   </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <script>
     const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
@@ -448,10 +450,6 @@
         restoreCities();
         renderManageCities(); 
         renderManualDeleteList();
-        
-        // Ocultar overlay de carga si existiera (no incluido en este HTML pero por si acaso)
-        const overlay = document.getElementById('map-loading-overlay');
-        if(overlay) overlay.style.display = 'none';
         
       }).catch(err => console.error("Error cargando mapa", err));
 
@@ -931,4 +929,5 @@
     }
   </script>
 
-</body></html>
+</body>
+</html>
