@@ -146,11 +146,22 @@
     .timeline-wrapper::before { content: ''; position: absolute; top: 15px; bottom: 0; left: 6px; width: 2px; background: #444; }
     .timeline-year-block { margin-bottom: 30px; }
     .timeline-year-label { font-size: 1.5rem; font-weight: bold; color: #777; margin-bottom: 15px; margin-left: -15px; }
-    .timeline-event { position: relative; margin-bottom: 25px; padding-left: 25px; }
-    .timeline-dot { position: absolute; left: -29px; top: 6px; width: 12px; height: 12px; background: #ffc107; border-radius: 50%; border: 2px solid #121212; z-index: 2; }
-    .timeline-country { font-size: 1.2rem; font-weight: 600; color: #ffc107; display: flex; align-items: center; gap: 10px; }
+    
+    .timeline-event { 
+        position: relative; margin-bottom: 25px; padding-left: 25px; 
+        /* NUEVO: Cursor y transición para drag and drop */
+        cursor: grab; transition: transform 0.2s, opacity 0.2s;
+    }
+    .timeline-event:active { cursor: grabbing; }
+    /* Clase que se añade al elemento que se está moviendo */
+    .timeline-event.dragging { opacity: 0.4; border: 2px dashed #ffc107; border-radius: 8px; }
+    /* Clase para indicar dónde va a caer */
+    .timeline-event.drag-over { border-top: 3px solid #007bff; margin-top: 25px; }
+
+    .timeline-dot { position: absolute; left: -29px; top: 6px; width: 12px; height: 12px; background: #ffc107; border-radius: 50%; border: 2px solid #121212; z-index: 2; pointer-events: none;}
+    .timeline-country { font-size: 1.2rem; font-weight: 600; color: #ffc107; display: flex; align-items: center; gap: 10px; pointer-events: none;}
     .timeline-flag { width: 24px; height: auto; border-radius: 2px; }
-    .timeline-date { color: #bbb; font-size: 0.95rem; margin-top: 4px; }
+    .timeline-date { color: #bbb; font-size: 0.95rem; margin-top: 4px; pointer-events: none;}
     .visit-count-tag { font-size: 0.85rem; color: #aaa; font-weight: normal; margin-left: 5px; }
 
     #loader { display: none; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
@@ -227,7 +238,7 @@
 
             <details>
                 <summary>📍 Gestionar Ubicaciones</summary>
-                <div class="input-group" style="margin-top:10px;"><label>Añadir Ciudad</label><div style="display:flex; gap:5px;"><input type="text" id="inputCity" list="listCities" placeholder="Ej: Malmo, Munich" oninput="debounceCitySearch()" style="flex:1;"><button class="btn-primary" onclick="addCity()">+</button></div><datalist id="listCities"></datalist><div id="loader"></div></div>
+                <div class="input-group" style="margin-top:10px;"><label>Añadir Ciudad</label><div style="display:flex; gap:5px;"><input type="text" id="inputCity" list="listCities" placeholder="Ej: Florence, Munich" oninput="debounceCitySearch()" style="flex:1;"><button class="btn-primary" onclick="addCity()">+</button></div><datalist id="listCities"></datalist><div id="loader"></div></div>
                 <div style="border-top:1px solid #eee; padding-top:10px;"><label>Eliminar Ciudad</label><input type="text" id="searchManage" placeholder="Filtrar nombre..." oninput="renderManageCities()" style="width:100%; box-sizing:border-box; margin-top:5px;"><ul id="manageCityList" class="scroll-list"></ul></div>
             </details>
 
@@ -332,7 +343,12 @@
         appState.cities = appState.cities || [];
         appState.trips = appState.trips || [];
         appState.pointSize = appState.pointSize || 5;
-        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
+        
+        // ASEGURAR ÍNDICE DE ORDEN para arrastre
+        appState.trips.forEach((t, i) => { 
+            if (!t.tripId) t.tripId = Date.now() + i; 
+            if (t.customOrder === undefined) t.customOrder = i; 
+        });
 
         document.getElementById('pointSizeSlider').value = appState.pointSize;
         document.getElementById('pointSizeLabel').innerText = appState.pointSize;
@@ -416,7 +432,7 @@
         const val = document.getElementById('inputCity').value;
         const list = document.getElementById('listCities');
         let sel;
-        // Lógica mejorada de selección para ser insensible a acentos si la API devolvió la ciudad normalizada
+        // Búsqueda insensible a acentos/mayúsculas para coincidir lo escrito por el usuario con lo devuelto por la API (inglés)
         for(let o of list.options) if(norm(o.value) === norm(val)) sel = o;
         
         if(!sel) return; 
@@ -428,26 +444,18 @@
         document.getElementById('inputCity').value = '';
     }
 
-    // FUNCIÓN NUEVA: Permitir borrar ciudad específica
     function deleteSpecificCity(index) {
         if(!confirm("¿Eliminar " + appState.cities[index].name + "?")) return;
-        
-        // Eliminar marcador del mapa
         if(cityMarkers[index] && cityMarkers[index].marker) {
             map.removeLayer(cityMarkers[index].marker);
         }
-
-        // Eliminar de los arrays
         appState.cities.splice(index, 1);
         cityMarkers.splice(index, 1);
-
-        // Actualizar UI y guardar para evitar "olvidos"
         renderManageCities();
         updateStats();
         saveToCloud(); 
     }
 
-    // FUNCIÓN NUEVA: Renderizar lista de ciudades
     function renderManageCities() {
         const list = document.getElementById('manageCityList');
         list.innerHTML = '';
@@ -457,7 +465,6 @@
             if(c.name.toLowerCase().includes(filter)) {
                 const li = document.createElement('li');
                 li.className = 'list-item';
-                // Añadimos botón de borrado específico
                 li.innerHTML = `<span>${c.name}</span> <button class="btn-del" onclick="deleteSpecificCity(${i})">🗑️</button>`;
                 list.appendChild(li);
             }
@@ -472,7 +479,19 @@
         if(!id) return; 
         const m = parseInt(document.getElementById('inputTripMonth').value);
         const y = parseInt(document.getElementById('inputTripYear').value);
-        const tripObj = { id, name, month:m, year:y, tripId: Date.now() };
+        
+        // Calculamos el máximo orden actual para poner este al final
+        const maxOrder = appState.trips.reduce((max, t) => Math.max(max, t.customOrder || 0), 0);
+        
+        const tripObj = { 
+            id, 
+            name, 
+            month:m, 
+            year:y, 
+            tripId: Date.now(),
+            customOrder: maxOrder + 1 
+        };
+
         appState.trips.push(tripObj);
         let createdCountry = false;
         if(!appState.countries[id]) {
@@ -491,9 +510,6 @@
         const last = appState.history.pop();
         if(!last) return;
         if(last.type === 'city') {
-             // Undo simple: borra el último. 
-             // Nota: Si el usuario borró manualmente una ciudad intermedia, el historial podría desincronizarse.
-             // Se recomienda usar el borrado manual para precisión.
              const m = cityMarkers.pop();
              if(m) map.removeLayer(m.marker);
              appState.cities.pop();
@@ -515,21 +531,31 @@
         updateStats();
     }
 
-    // --- TIMELINE ---
+    // --- TIMELINE CON DRAG AND DROP ---
     function openTimeline() { renderTimeline(); document.getElementById('timeline-modal').style.display = 'flex'; }
+    
+    // Variable para almacenar el elemento que se está arrastrando
+    let draggedItem = null;
+
     function renderTimeline() {
         const c = document.getElementById('timeline-container'); c.innerHTML = '';
         if(appState.trips.length===0) { c.innerHTML='<div style="text-align:center;margin-top:50px;color:#777">Sin viajes.</div>'; return; }
         
+        // Asegurar que todos tengan customOrder
+        appState.trips.forEach((t, i) => { if(t.customOrder === undefined) t.customOrder = i; });
+
+        // Ordenar: Año -> Mes -> Orden Personalizado
         const displayTrips = [...appState.trips].sort((a, b) => {
             if (b.year !== a.year) return b.year - a.year; 
             if (b.month !== a.month) return b.month - a.month; 
-            return a.tripId - b.tripId; 
+            return (a.customOrder || 0) - (b.customOrder || 0);
         });
+
+        // Contar visitas para mostrar (1ª vez, etc)
         const chronoTrips = [...appState.trips].sort((a, b) => {
             if (a.year !== b.year) return a.year - b.year;
             if (a.month !== b.month) return a.month - b.month;
-            return a.tripId - b.tripId;
+            return a.tripId - b.tripId; 
         });
         const visitCounts = {};
         chronoTrips.forEach(t => { visitCounts[t.id] = (visitCounts[t.id] || 0) + 1; t.visitOrder = visitCounts[t.id]; });
@@ -542,14 +568,27 @@
                 blk.innerHTML = `<div class="timeline-year-label">${curY}</div>`;
                 c.appendChild(blk);
             }
-            const ev = document.createElement('div'); ev.className='timeline-event';
+            
+            const ev = document.createElement('div'); 
+            ev.className='timeline-event';
+            // Configurar Drag and Drop
+            ev.setAttribute('draggable', 'true');
+            ev.setAttribute('data-tripid', t.tripId);
+            
+            // Eventos nativos de JS para drag
+            ev.addEventListener('dragstart', handleDragStart);
+            ev.addEventListener('dragover', handleDragOver);
+            ev.addEventListener('dragleave', handleDragLeave);
+            ev.addEventListener('drop', handleDrop);
+            ev.addEventListener('dragend', handleDragEnd);
+
             const flag = `https://flagcdn.com/24x18/${iso3to2[t.id]||'xx'}.png`;
             const countTxt = t.visitOrder > 1 ? `<span class="visit-count-tag">(${t.visitOrder}ª vez)</span>` : '';
             ev.innerHTML = `
                <div class="timeline-dot"></div>
                <div class="timeline-card">
                  <div class="timeline-country"><img src="${flag}" class="timeline-flag" crossorigin="anonymous"> ${t.name} ${countTxt}</div>
-                 <div class="timeline-date">✈ ${monthNames[t.month-1]}, ${t.year}</div>
+                 <div class="timeline-date">✈ ${monthNames[t.month-1]}, ${t.year} <span style="font-size:0.7em; color:#444;">::</span></div>
                  <div class="timeline-actions" data-html2canvas-ignore="true">
                    <button class="btn-timeline-del" onclick="delTrip(${t.tripId})">ELIMINAR</button>
                  </div>
@@ -557,6 +596,77 @@
             blk.appendChild(ev);
         });
     }
+
+    // --- FUNCIONES DRAG AND DROP ---
+    function handleDragStart(e) {
+        draggedItem = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-tripid'));
+        setTimeout(() => this.classList.add('dragging'), 0);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        // Solo añadir clase visual si no somos nosotros mismos
+        if (this !== draggedItem) {
+            this.classList.add('drag-over');
+        }
+        return false;
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.timeline-event').forEach(el => el.classList.remove('drag-over'));
+        draggedItem = null;
+    }
+
+    function handleDrop(e) {
+        e.stopPropagation(); // Detener el navegador de redireccionar
+        e.preventDefault();
+
+        this.classList.remove('drag-over');
+        
+        const draggedTripId = parseInt(e.dataTransfer.getData('text/plain'));
+        const targetTripId = parseInt(this.getAttribute('data-tripid'));
+
+        if (draggedTripId === targetTripId) return;
+
+        // Lógica de reordenamiento
+        // 1. Crear una copia de la lista ordenada tal como se ve en pantalla
+        let currentOrderList = [...appState.trips].sort((a, b) => {
+            if (b.year !== a.year) return b.year - a.year; 
+            if (b.month !== a.month) return b.month - a.month; 
+            return (a.customOrder || 0) - (b.customOrder || 0);
+        });
+
+        // 2. Encontrar índices en la lista visual
+        const fromIndex = currentOrderList.findIndex(t => t.tripId === draggedTripId);
+        const toIndex = currentOrderList.findIndex(t => t.tripId === targetTripId);
+
+        if(fromIndex < 0 || toIndex < 0) return;
+
+        // 3. Mover el elemento en el array
+        const [movedItem] = currentOrderList.splice(fromIndex, 1);
+        currentOrderList.splice(toIndex, 0, movedItem);
+
+        // 4. Reasignar customOrder basado en la nueva posición visual
+        // Esto asegura que el orden quede grabado en números secuenciales
+        currentOrderList.forEach((t, index) => {
+            // Buscamos el objeto real en appState.trips y actualizamos su orden
+            const realTrip = appState.trips.find(rt => rt.tripId === t.tripId);
+            if(realTrip) realTrip.customOrder = index;
+        });
+
+        // 5. Renderizar y Guardar
+        renderTimeline();
+        saveToCloud(); // Guardado automático para no perder el orden
+    }
+
     function delTrip(uid) {
         if(!confirm("¿Borrar?")) return;
         const i = appState.trips.findIndex(t => t.tripId === uid);
@@ -590,8 +700,6 @@
         document.getElementById('stat-total-countries').innerText = Object.keys(appState.countries).length;
         document.getElementById('stat-total-cities').innerText = appState.cities.length;
         document.getElementById('stat-total-trips').innerText = appState.trips.length;
-        
-        // Aseguramos que la lista de borrado se actualice cuando se actualizan las estadísticas
         renderManageCities();
     }
     
@@ -603,20 +711,20 @@
       document.getElementById('loader').style.display = 'block';
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
-        // CORRECCIÓN 3: Eliminado 'accept-language=es' para obtener nombres nativos (Malmo, etc)
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(q)}`)
+        // CORRECCIÓN AQUÍ: accept-language=en fuerza resultados en inglés
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&accept-language=en&q=${encodeURIComponent(q)}`)
           .then(r => r.json()).then(data => {
              const l = document.getElementById('listCities'); l.innerHTML = '';
              data.forEach(i => {
                  if(['administrative','place','city','town'].includes(i.type) || i.class==='place') {
                      const opt = document.createElement('option');
-                     let txt = i.name; // Usamos el nombre tal cual viene de la API
+                     let txt = i.name; 
                      const c = i.address?.country || "";
                      const r = i.address?.state || i.address?.region || "";
                      if(r) txt+= `, ${r}`; if(c) txt+= `, ${c}`;
                      opt.value = txt;
                      opt.setAttribute('data-lat', i.lat); opt.setAttribute('data-lon', i.lon);
-                     opt.setAttribute('data-c', c); opt.setAttribute('data-n', i.name); // Guardamos nombre original
+                     opt.setAttribute('data-c', c); opt.setAttribute('data-n', i.name); 
                      l.appendChild(opt);
                  }
              });
