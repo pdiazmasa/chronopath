@@ -2,91 +2,78 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa de Viajes Pro</title>
+  <title>ChronoPath</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    /* RESET Y ESTRUCTURA */
-    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background: #f0f2f5; }
     
+    /* PANTALLA DE LOGIN */
+    #login-screen {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #f0f2f5; z-index: 5000;
+        display: flex; justify-content: center; align-items: center;
+    }
+    .login-card {
+        background: white; padding: 40px; border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 380px; text-align: center;
+    }
+    .login-card h2 { margin-top: 0; color: #333; }
+    .login-input {
+        width: 100%; padding: 12px; margin: 8px 0;
+        border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        font-size: 1rem;
+    }
+    .login-btn {
+        width: 100%; padding: 12px; background: #007bff; color: white;
+        border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        margin-top: 15px; transition: background 0.2s;
+    }
+    .login-btn:hover { background: #0056b3; }
+    .auth-link { color: #007bff; cursor: pointer; font-size: 0.9rem; text-decoration: none; display: block; margin-top: 15px; }
+
+    /* CONTENEDOR PRINCIPAL */
+    #app-container { display: none; width: 100%; height: 100%; position: relative; }
     #map { height: 100%; width: 100%; z-index: 1; background: #aadaff; }
 
-    /* --- PANEL LATERAL --- */
+    /* PANEL LATERAL */
     #controls {
-      position: absolute;
-      top: 20px; left: 20px;
-      width: 360px;
-      max-height: 85vh;
-      background: rgba(255, 255, 255, 0.98);
-      padding: 0; 
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden; 
-      transition: all 0.3s ease;
+      position: absolute; top: 20px; left: 20px; width: 360px; max-height: 85vh;
+      background: rgba(255, 255, 255, 0.98); padding: 0; 
+      border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      z-index: 1000; display: flex; flex-direction: column;
+      overflow: hidden; transition: all 0.3s ease;
     }
 
     .panel-header {
-        padding: 15px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        user-select: none;
-        position: relative;
+        padding: 15px; background: #f8f9fa; border-bottom: 1px solid #eee;
+        cursor: pointer; display: flex; justify-content: center; align-items: center;
+        user-select: none; position: relative;
     }
     .panel-header h1 { margin: 0; font-size: 1.2rem; color: #333; font-weight: 700; }
-    .panel-toggle-icon { 
-        font-size: 0.8rem; color: #666; 
-        transition: transform 0.3s; 
-        position: absolute;
-        right: 15px;
-    }
-    
+    .panel-toggle-icon { position: absolute; right: 15px; font-size: 0.8rem; color: #666; transition: transform 0.3s; }
     #controls.collapsed .panel-toggle-icon { transform: rotate(-90deg); }
     #controls.collapsed #panel-content { display: none; }
-    #controls.collapsed { max-height: 55px; }
+    #controls.collapsed { max-height: 60px; }
 
-    #panel-content {
-        padding: 15px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
+    #panel-content { padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
-    /* --- BOTONES HERRAMIENTAS (Top Right) --- */
+    /* HERRAMIENTAS SUPERIORES (Derecha) */
     #top-right-tools {
-        position: absolute;
-        top: 20px; right: 20px;
-        z-index: 1000;
-        display: flex;
-        gap: 8px;
-        transition: all 0.3s;
+        position: absolute; top: 20px; right: 20px; z-index: 1000; display: flex; gap: 8px; transition: all 0.3s;
     }
-    
     .btn-tool {
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 8px 12px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: #444;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        transition: all 0.2s;
-        display: flex; align-items: center; gap: 6px;
+        background: rgba(255, 255, 255, 0.95); border: 1px solid #ccc; border-radius: 8px;
+        padding: 8px 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: #444;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.2s; display: flex; align-items: center; gap: 6px;
     }
     .btn-tool:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
@@ -97,25 +84,21 @@
         cursor: pointer; font-size: 0.85rem; font-weight: 600; border-radius: 6px;
         color: #555; transition: all 0.2s;
     }
-    
     #btn-tab-add.active { background: #007bff; color: white; } 
     #btn-tab-stats.active { background: #ffc107; color: #333; } 
     #btn-tab-time.active { background: #2ecc71; color: white; } 
     
     .tab-content { display: none; animation: fadeIn 0.3s; }
     .tab-content.active { display: block; }
-    
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* INPUTS */
     .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     label { font-weight: 600; font-size: 0.85rem; color: #555; }
-    input, select, button {
-      padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; outline: none;
-    }
+    input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.95rem; outline: none; }
     input:focus, select:focus { border-color: #007bff; }
 
-    /* BOTONES ACCIÓN */
+    /* BOTONES DE COLOR */
     .btn-main-tab {
         width: 100%; padding: 12px; border: none; border-radius: 8px;
         font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 10px;
@@ -123,45 +106,42 @@
         display: flex; justify-content: center; align-items: center; gap: 8px;
     }
     .btn-main-tab:active { transform: scale(0.98); }
-
-    .btn-blue { background-color: #007bff; color: white; }
-    .btn-blue:hover { background-color: #0056b3; }
-    .btn-yellow { background-color: #ffc107; color: #333; }
-    .btn-yellow:hover { background-color: #e0a800; }
-    .btn-green { background-color: #2ecc71; color: white; }
-    .btn-green:hover { background-color: #27ae60; }
     
-    .btn-primary { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: 600; width: auto; }
-    .btn-action { background-color: #6c757d; color: white; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; padding: 8px;}
-    .btn-danger-block { background-color: #dc3545; color: white; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; padding: 12px; border-radius: 6px;}
+    .btn-blue { background-color: #007bff; color: white; } .btn-blue:hover { background-color: #0056b3; }
+    .btn-yellow { background-color: #ffc107; color: #333; } .btn-yellow:hover { background-color: #e0a800; }
+    .btn-green { background-color: #2ecc71; color: white; } .btn-green:hover { background-color: #27ae60; }
+    
+    .btn-primary { background-color: #007bff; color: white; width: auto; }
+    .btn-action { background-color: #6c757d; color: white; font-weight: 600; font-size: 0.85rem; padding: 8px; width: auto;}
+    .btn-danger-block { background-color: #dc3545; color: white; width: 100%; font-weight: bold; margin-top: 10px; padding: 12px; border-radius: 6px;}
+    .btn-del { background: #ffdede; color: #d00; border:none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;}
+    
+    /* Botón Eliminar Timeline */
+    .btn-timeline-del { 
+        background: transparent; border: 1px solid #999; color: #888; 
+        font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; 
+        cursor: pointer; margin-top: 5px; text-transform: uppercase; font-weight: normal;
+    }
+    .btn-timeline-del:hover { color: #ff4444; border-color: #ff4444; opacity: 1; }
 
-    /* DETALLES */
+    /* ELEMENTOS DE INTERFAZ */
     details { background: #f8f9fa; border-radius: 8px; border: 1px solid #eee; padding: 8px; margin-top: 8px; }
     summary { cursor: pointer; font-weight: 600; color: #444; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center;}
     summary::after { content: "▼"; font-size: 0.7em; color: #999; }
     details[open] summary::after { content: "▲"; }
 
-    /* LISTAS */
     .scroll-list { max-height: 150px; overflow-y: auto; margin: 5px 0 0 0; padding: 0; list-style: none; }
     .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-    .btn-del { background: #ffdede; color: #d00; border:none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-    
     .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; color: #333; }
-    .stats-table th { text-align: left; border-bottom: 2px solid #ddd; padding: 5px; color: #555; }
-    .stats-table td { border-bottom: 1px solid #eee; padding: 8px 5px; }
-
-    /* MODAL */
-    .modal-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); z-index: 3000; flex-direction: column;
-    }
-    .modal-header {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 15px; background: #1e1e1e; color: #eee; width: 100%; box-sizing: border-box;
-    }
-    .modal-body { flex: 1; overflow-y: auto; padding: 20px; position: relative; width: 100%; box-sizing: border-box; }
+    .stats-table td, .stats-table th { border-bottom: 1px solid #eee; padding: 8px 5px; text-align: left; }
     
-    /* Timeline */
+    /* MODALES */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1e1e1e; color: #eee; width: 100%; box-sizing: border-box; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 20px; width: 100%; box-sizing: border-box; }
+    .chart-container { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
+
+    /* TIMELINE DISEÑO */
     .timeline-wrapper { position: relative; max-width: 600px; margin: 0 auto; padding-left: 30px; padding-bottom: 80px; color: #fff; }
     .timeline-wrapper::before { content: ''; position: absolute; top: 15px; bottom: 0; left: 6px; width: 2px; background: #444; }
     .timeline-year-block { margin-bottom: 30px; }
@@ -172,446 +152,328 @@
     .timeline-flag { width: 24px; height: auto; border-radius: 2px; }
     .timeline-date { color: #bbb; font-size: 0.95rem; margin-top: 4px; }
     .visit-count-tag { font-size: 0.85rem; color: #aaa; font-weight: normal; margin-left: 5px; }
-    .btn-timeline-del { 
-        background: transparent; border: 1px solid #666; color: #888; 
-        font-size: 10px; padding: 4px 10px; border-radius: 12px; 
-        cursor: pointer; margin-top: 8px; text-transform: uppercase; font-weight: bold;
-    }
 
-    .chart-container { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px auto; }
     #loader { display: none; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* MÓVIL */
+    /* RESPONSIVE MÓVIL */
     @media (max-width: 600px) {
-      #controls { 
-        width: 90%; left: 5%; top: 10px; 
-        border-radius: 16px;
-      }
+      #controls { width: 90%; left: 5%; top: 10px; border-radius: 16px; }
       #panel-content { padding: 15px; }
-
-      #top-right-tools {
-        position: fixed;
-        top: auto; bottom: 20px; 
-        left: 50%; transform: translateX(-50%);
-        right: auto;
-        width: 90%;
-        justify-content: space-around;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 10px;
-        border-radius: 50px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        backdrop-filter: blur(5px);
-        gap: 5px;
-      }
-      
-      .btn-tool {
-        border: none; box-shadow: none; background: transparent;
-        flex-direction: column; font-size: 0.75rem; padding: 5px; gap: 2px;
-      }
-      .btn-tool:hover { background: rgba(0,0,0,0.05); transform: none; }
+      #top-right-tools { position: fixed; top: auto; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; justify-content: space-around; padding: 10px; border-radius: 50px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); gap: 5px; }
+      .btn-tool { border: none; box-shadow: none; background: transparent; flex-direction: column; font-size: 0.75rem; padding: 5px; gap: 2px; }
     }
   </style>
 </head>
 <body>
 
-  <div id="top-right-tools" data-html2canvas-ignore="true">
-      <button class="btn-tool" onclick="undoAction()">
-        <span>↩</span> <span>Deshacer</span>
-      </button>
-      <button class="btn-tool" onclick="saveMap()">
-        <span>💾</span> <span>Guardar</span>
-      </button>
-      <button class="btn-tool" onclick="exportMapImage()">
-        <span>📷</span> <span>Foto</span>
-      </button>
+  <div id="login-screen">
+      <div class="login-card">
+          <h2 id="auth-title">Iniciar Sesión</h2>
+          <input type="email" id="auth-email" class="login-input" placeholder="Email" required>
+          <input type="password" id="auth-password" class="login-input" placeholder="Contraseña" required>
+          <button id="auth-submit-btn" class="login-btn" onclick="handleAuthSubmit(true)">Entrar</button>
+          <a class="auth-link" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate</a>
+      </div>
   </div>
 
-  <div id="timeline-modal" class="modal-overlay">
-    <div class="modal-header">
-        <div style="width: 80px;"></div> 
-        <h2>Cronología</h2>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-action" onclick="exportTimelinePDF()">⬇ PDF</button>
-            <button class="btn-action" style="background:transparent; color:#007bff; font-size:1.5rem;" onclick="closeModal('timeline-modal')">✕</button>
-        </div>
-    </div>
-    <div class="modal-body">
-        <div id="timeline-container" class="timeline-wrapper"></div>
-    </div>
-  </div>
+  <div id="app-container">
+      
+      <div id="top-right-tools" data-html2canvas-ignore="true">
+          <button class="btn-tool" onclick="undoAction()" title="Deshacer último cambio"><span>↩</span> <span>Deshacer</span></button>
+          <button class="btn-tool" onclick="saveToCloud()" title="Guardar en la Nube"><span>☁</span> <span>Guardar</span></button>
+          <button class="btn-tool" onclick="exportMapImage()" title="Descargar imagen del mapa"><span>📷</span> <span>Foto</span></button>
+          <button class="btn-tool" onclick="logoutUser()" title="Cerrar Sesión" style="color:#d00;"><span>🚪</span></button>
+      </div>
 
-  <div id="stats-modal" class="modal-overlay" style="background: rgba(240, 242, 245, 0.95);">
-    <div class="modal-header" style="background: #fff; color: #333; border-bottom: 1px solid #ddd;">
-        <div style="width: 30px;"></div>
-        <h2>Estadísticas</h2>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-action" onclick="exportStatsPDF()">⬇ PDF</button>
-            <button class="btn-action" style="background:transparent; color:#333; font-size:1.5rem;" onclick="closeModal('stats-modal')">✕</button>
-        </div>
-    </div>
-    <div class="modal-body" style="color: #333;">
-        <div id="stats-content" style="padding: 10px;">
-            <div class="chart-container">
-                <h3>Viajes por Año</h3>
-                <canvas id="chartYears"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Países por Continente</h3>
-                <div style="max-width: 400px; margin: 0 auto;">
-                    <canvas id="chartContinents"></canvas>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Ciudades por País</h3>
-                <div style="overflow-y: visible;"> 
-                    <table class="stats-table">
-                        <thead><tr><th>País</th><th style="text-align: right;">Nº Ciudades</th></tr></thead>
-                        <tbody id="citiesTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="chart-container">
-                <h3>Resumen General</h3>
+      <div id="timeline-modal" class="modal-overlay">
+        <div class="modal-header"><div style="width:80px;"></div><h2>Cronología</h2><div style="display:flex; gap:10px;"><button class="btn-action" onclick="exportTimelinePDF()">⬇ PDF</button><button class="btn-action" style="background:transparent; color:#007bff; font-size:1.5rem;" onclick="closeModal('timeline-modal')">✕</button></div></div>
+        <div class="modal-body"><div id="timeline-container" class="timeline-wrapper"></div></div>
+      </div>
+
+      <div id="stats-modal" class="modal-overlay" style="background: rgba(240,242,245,0.95);">
+        <div class="modal-header" style="background:#fff; color:#333; border-bottom:1px solid #ddd;"><div style="width:30px;"></div><h2>Estadísticas</h2><div style="display:flex; gap:10px;"><button class="btn-action" onclick="exportStatsPDF()">⬇ PDF</button><button class="btn-action" style="background:transparent; color:#333; font-size:1.5rem;" onclick="closeModal('stats-modal')">✕</button></div></div>
+        <div class="modal-body" style="color:#333;"><div id="stats-content" style="padding:10px;">
+            <div class="chart-container"><h3>Viajes por Año</h3><canvas id="chartYears"></canvas></div>
+            <div class="chart-container"><h3>Países por Continente</h3><div style="max-width:400px; margin:0 auto;"><canvas id="chartContinents"></canvas></div></div>
+            <div class="chart-container"><h3>Ciudades por País</h3><div style="overflow-y:visible;"><table class="stats-table"><thead><tr><th>País</th><th style="text-align:right;">Nº Ciudades</th></tr></thead><tbody id="citiesTableBody"></tbody></table></div></div>
+            <div class="chart-container"><h3>Resumen General</h3>
                 <p><strong>Países Visitados:</strong> <span id="stat-total-countries">0</span></p>
                 <p><strong>Total Ciudades:</strong> <span id="stat-total-cities">0</span></p>
                 <p><strong>Entradas en Cronología:</strong> <span id="stat-total-trips">0</span></p>
             </div>
+        </div></div>
+      </div>
+
+      <div id="controls" data-html2canvas-ignore="true">
+        <div class="panel-header" onclick="togglePanel()"><h1>🌍 Diario de Viajes 🌍</h1><span class="panel-toggle-icon">▼</span></div>
+        <div id="panel-content">
+            <div class="tabs-header">
+                <button id="btn-tab-add" class="tab-btn active" onclick="openTab('tab-add')">Añadir Viaje</button>
+                <button id="btn-tab-stats" class="tab-btn" onclick="openTab('tab-stats')">Estadísticas</button>
+                <button id="btn-tab-time" class="tab-btn" onclick="openTab('tab-time')">Cronología</button>
+            </div>
+
+            <div id="tab-add" class="tab-content active">
+                <div class="input-group"><label>País</label><input type="text" id="inputTripCountry" list="listCountries" placeholder="Selecciona país..."><datalist id="listCountries"></datalist></div>
+                <div class="input-group" style="flex-direction:row;"><select id="inputTripMonth" style="flex:1;"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select><input type="number" id="inputTripYear" value="2025" style="width:70px;"></div>
+                <button class="btn-main-tab btn-blue" onclick="addFullTrip()">Registrar Viaje</button>
+            </div>
+
+            <div id="tab-stats" class="tab-content"><button class="btn-main-tab btn-yellow" onclick="openStatsModal()">📊 Ver Estadísticas</button></div>
+            <div id="tab-time" class="tab-content"><button class="btn-main-tab btn-green" onclick="openTimeline()">📜 Abrir Línea de Tiempo</button></div>
+
+            <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+
+            <details>
+                <summary>📍 Gestionar Ubicaciones</summary>
+                <div class="input-group" style="margin-top:10px;"><label>Añadir Ciudad</label><div style="display:flex; gap:5px;"><input type="text" id="inputCity" list="listCities" placeholder="Ej: Malmo, Munich" oninput="debounceCitySearch()" style="flex:1;"><button class="btn-primary" onclick="addCity()">+</button></div><datalist id="listCities"></datalist><div id="loader"></div></div>
+                <div style="border-top:1px solid #eee; padding-top:10px;"><label>Eliminar Ciudad</label><input type="text" id="searchManage" placeholder="Filtrar nombre..." oninput="renderManageCities()" style="width:100%; box-sizing:border-box; margin-top:5px;"><ul id="manageCityList" class="scroll-list"></ul></div>
+            </details>
+
+            <details>
+                <summary>⚙️ Opciones</summary>
+                <div class="input-group" style="margin-top:10px;"><label>Tamaño Puntos: <span id="pointSizeLabel">5</span></label><input type="range" id="pointSizeSlider" min="2" max="15" value="5" oninput="updatePointSize(this.value)"></div>
+                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><label style="color:#444; font-weight:bold;">Gestión Manual de Países</label>
+                    <div style="margin-top:5px; display:flex; gap:5px;"><input type="text" id="manualCountryInput" list="listCountries" placeholder="Añadir País..." style="flex:1;"><button class="btn-action" style="background:#28a745;" onclick="manualAddCountry()">+</button></div>
+                    <div style="margin-top:10px; display:flex; gap:5px;"><select id="manualDeleteSelect" style="flex:1;"><option>Eliminar País...</option></select><button class="btn-del" onclick="manualDeleteCountry()">🗑️</button></div>
+                </div>
+                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><button class="btn-danger-block" onclick="factoryReset()">⚠ Reiniciar de Fábrica</button></div>
+                <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;"><button class="btn-action" style="width:100%;" onclick="exportJSON()">⬇ Copia de Seguridad (JSON)</button></div>
+            </details>
         </div>
-    </div>
+      </div>
+      <div id="map"></div>
   </div>
-
-  <div id="controls" data-html2canvas-ignore="true">
-    <div class="panel-header" onclick="togglePanel()">
-        <h1>🌍 Diario de Viajes 🌍</h1>
-        <span class="panel-toggle-icon">▼</span>
-    </div>
-
-    <div id="panel-content">
-        <div class="tabs-header">
-            <button id="btn-tab-add" class="tab-btn active" onclick="openTab('tab-add')">Añadir Viaje</button>
-            <button id="btn-tab-stats" class="tab-btn" onclick="openTab('tab-stats')">Estadísticas</button>
-            <button id="btn-tab-time" class="tab-btn" onclick="openTab('tab-time')">Cronología</button>
-        </div>
-
-        <div id="tab-add" class="tab-content active">
-            <div class="input-group">
-                <label>País</label>
-                <input type="text" id="inputTripCountry" list="listCountries" placeholder="Selecciona país...">
-                <datalist id="listCountries"></datalist>
-            </div>
-            <div class="input-group" style="flex-direction: row;">
-                <select id="inputTripMonth" style="flex:1;">
-                    <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-                    <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-                    <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-                    <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-                </select>
-                <input type="number" id="inputTripYear" value="2025" style="width: 70px;">
-            </div>
-            <button class="btn-main-tab btn-blue" onclick="addFullTrip()">Registrar Viaje</button>
-        </div>
-
-        <div id="tab-stats" class="tab-content">
-            <button class="btn-main-tab btn-yellow" onclick="openStatsModal()">📊 Ver Estadísticas</button>
-        </div>
-
-        <div id="tab-time" class="tab-content">
-            <button class="btn-main-tab btn-green" onclick="openTimeline()">📜 Abrir Línea de Tiempo</button>
-        </div>
-
-        <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
-
-        <details open>
-            <summary>📍 Gestionar Ubicaciones</summary>
-            <div class="input-group" style="margin-top:10px;">
-                <label>Añadir Ciudad</label>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="inputCity" list="listCities" placeholder="Ej: Malmö, Kyoto..." oninput="debounceCitySearch()" style="flex:1;">
-                    <button class="btn-primary" style="width:auto;" onclick="addCity()">+</button>
-                </div>
-                <datalist id="listCities"></datalist>
-                <div id="loader"></div>
-            </div>
-            
-            <div style="border-top:1px solid #eee; padding-top:10px;">
-                <label>Eliminar Ciudad</label>
-                <input type="text" id="searchManage" placeholder="Filtrar ciudad..." oninput="renderManageCities()" style="width:100%; box-sizing:border-box; margin-top:5px;">
-                <ul id="manageCityList" class="scroll-list"></ul>
-            </div>
-        </details>
-
-        <details>
-            <summary>⚙️ Opciones</summary>
-            <div class="input-group" style="margin-top:10px;">
-                <label>Tamaño de Puntos: <span id="pointSizeLabel">5</span></label>
-                <input type="range" id="pointSizeSlider" min="2" max="15" value="5" oninput="updatePointSize(this.value)">
-            </div>
-            <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;">
-                <label style="color:#444; font-weight:bold; margin-bottom:5px; display:block;">Gestión Manual de Países</label>
-                <label style="font-size:0.8rem; margin-top:5px;">Añadir</label>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="manualCountryInput" list="listCountries" placeholder="País..." style="flex:1;">
-                    <button class="btn-action" style="background:#28a745; width:auto;" onclick="manualAddCountry()">+</button>
-                </div>
-                <label style="font-size:0.8rem; margin-top:10px; display:block;">Eliminar</label>
-                <div style="display:flex; gap:5px;">
-                    <select id="manualDeleteSelect" style="flex:1;"><option value="">Selecciona país...</option></select>
-                    <button class="btn-del btn-xs" style="padding:8px;" onclick="manualDeleteCountry()">🗑️</button>
-                </div>
-            </div>
-            <div style="border-top:1px solid #eee; padding-top:10px; margin-top:10px;">
-                <button class="btn-danger-block" onclick="factoryReset()">⚠ Reiniciar de Fábrica</button>
-            </div>
-        </details>
-    </div>
-  </div>
-
-  <div id="map" style="position: relative;" tabindex="0"></div>
-
-  <script id="saved-data" type="application/json">
-    {"countries":{"ROU":"hsl(328, 70%, 60%)","EST":"hsl(280, 70%, 60%)","BEL":"hsl(41, 70%, 60%)","GBR":"hsl(235, 70%, 60%)","DEU":"hsl(154, 70%, 60%)","SWE":"hsl(115, 70%, 60%)"},"cities":[{"name":"Bucarest","lat":44.4361414,"lng":26.1027202,"country":"Rumanía","id":1},{"name":"Tallin","lat":59.4372419,"lng":24.7572802,"country":"Estonia","id":2},{"name":"Kloogaranna küla","lat":59.3443557,"lng":24.2585302,"country":"Estonia","id":3},{"name":"Marche-en-Famenne","lat":50.2270943,"lng":5.3419568,"country":"Bélgica","id":4},{"name":"Bruselas","lat":50.8465573,"lng":4.351697,"country":"Bélgica","id":5},{"name":"Londres","lat":51.5074456,"lng":-0.1277653,"country":"Reino Unido","id":6},{"name":"Nordhorn","lat":52.4359731,"lng":7.0707659,"country":"Alemania","id":7},{"name":"Bremen","lat":53.0758196,"lng":8.8071646,"country":"Alemania","id":8},{"name":"Karlstad","lat":59.3809146,"lng":13.5027631,"country":"Suecia","id":9},{"name":"Sarria","lat":42.7641051,"lng":-7.4007679,"country":"España","id":10},{"name":"Portomarín","lat":42.8103267,"lng":-7.6154208,"country":"España","id":11},{"name":"Palas de Rei","lat":42.8804184,"lng":-7.8820424,"country":"España","id":12}],"trips":[{"id":"ROU","name":"Rumanía","month":10,"year":2025,"tripId":1763555920572,"visitOrder":1},{"id":"EST","name":"Estonia","month":6,"year":2022,"tripId":1763556134091,"visitOrder":1},{"id":"BEL","name":"Bélgica","month":7,"year":2022,"tripId":1763556213907,"visitOrder":1},{"id":"GBR","name":"Reino Unido","month":5,"year":2023,"tripId":1763556326739,"visitOrder":1},{"id":"DEU","name":"Alemania","month":9,"year":2019,"tripId":1763556461860,"visitOrder":1},{"id":"SWE","name":"Suecia","month":3,"year":2019,"tripId":1763556881548,"visitOrder":1}],"history":[],"pointSize":5}
-  </script>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <script>
-    const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
-    const UN_MEMBERS = ["AFG","ALB","DZA","AND","AGO","ATG","ARG","ARM","AUS","AUT","AZE","BHS","BHR","BGD","BRB","BLR","BEL","BLZ","BEN","BTN","BOL","BIH","BWA","BRA","BRN","BGR","BFA","BDI","CPV","KHM","CMR","CAN","CAF","TCD","CHL","CHN","COL","COM","COG","COD","CRI","CIV","HRV","CUB","CYP","CZE","PRK","DNK","DJI","DMA","DOM","ECU","EGY","SLV","GNQ","ERI","EST","SWZ","ETH","FJI","FIN","FRA","GAB","GMB","GEO","DEU","GHA","GRC","GDN","GTM","GIN","GNB","GUY","HTI","HND","HUN","ISL","IND","IDN","IRN","IRQ","IRL","ISR","ITA","JAM","JPN","JOR","KAZ","KEN","KIR","KWT","KGZ","LAO","LVA","LBN","LSO","LBR","LBY","LIE","LTU","LUX","MDG","MWI","MYS","MDV","MLI","MLT","MHL","MRT","MUS","MEX","FSM","MCO","MNG","MNE","MAR","MOZ","MMR","NAM","NRU","NPL","NLD","NZL","NIC","NER","NGA","MKD","NOR","OMN","PAK","PLW","PAN","PNG","PRY","PER","PHL","POL","PRT","QAT","KOR","MDA","ROU","RUS","RWA","KNA","LCA","VCT","WSM","SMR","STP","SAU","SEN","SRB","SYC","SLE","SGP","SVK","SVN","SLB","SOM","ZAF","SSD","ESP","LKA","SDN","SUR","SWE","CHE","SYR","TJK","THA","TLS","TGO","TON","TTO","TUN","TUR","TKM","TUV","UGA","UKR","ARE","GBR","TZA","USA","URY","UZB","VUT","VEN","VNM","YEM","ZMB","ZWE"];
-    const monthNames = ["En", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-    
-    // Estado principal
+    // ===========================================================
+    // 1. CREDENCIALES (PEGA AQUÍ TUS CLAVES REALES)
+    // ===========================================================
+    const SUPABASE_URL = 'https://ogpfsufgqyrlmpsybulm.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ncGZzdWZncXlybG1wc3lidWxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NDE2NjksImV4cCI6MjA3OTExNzY2OX0.rLblkO4T5kaTQ7NTKZEocBdObMlHE4e_tVNuGSnwfZ8'; 
+    // ===========================================================
+
+    // VARIABLES GLOBALES
+    let map;
     let appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
-    
     let geoJsonLayer;
-    let cityMarkers = {}; // CAMBIO: Usamos objeto (mapa) por ID para acceso rápido
+    let cityMarkers = [];
     const regionNames = new Intl.DisplayNames(['es'], { type: 'region' });
     let iso3to2 = {}; 
     let countryNames = {};
     let countryContinents = {}; 
     let myChartYears, myChartContinents;
 
-    // Función normalizadora para búsquedas internas (sin acentos)
+    const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
+    const UN_MEMBERS = ["AFG","ALB","DZA","AND","AGO","ATG","ARG","ARM","AUS","AUT","AZE","BHS","BHR","BGD","BRB","BLR","BEL","BLZ","BEN","BTN","BOL","BIH","BWA","BRA","BRN","BGR","BFA","BDI","CPV","KHM","CMR","CAN","CAF","TCD","CHL","CHN","COL","COM","COG","COD","CRI","CIV","HRV","CUB","CYP","CZE","PRK","DNK","DJI","DMA","DOM","ECU","EGY","SLV","GNQ","ERI","EST","SWZ","ETH","FJI","FIN","FRA","GAB","GMB","GEO","DEU","GHA","GRC","GDN","GTM","GIN","GNB","GUY","HTI","HND","HUN","ISL","IND","IDN","IRN","IRQ","IRL","ISR","ITA","JAM","JPN","JOR","KAZ","KEN","KIR","KWT","KGZ","LAO","LVA","LBN","LSO","LBR","LBY","LIE","LTU","LUX","MDG","MWI","MYS","MDV","MLI","MLT","MHL","MRT","MUS","MEX","FSM","MCO","MNG","MNE","MAR","MOZ","MMR","NAM","NRU","NPL","NLD","NZL","NIC","NER","NGA","MKD","NOR","OMN","PAK","PLW","PAN","PNG","PRY","PER","PHL","POL","PRT","QAT","KOR","MDA","ROU","RUS","RWA","KNA","LCA","VCT","WSM","SMR","STP","SAU","SEN","SRB","SYC","SLE","SGP","SVK","SVN","SLB","SOM","ZAF","SSD","ESP","LKA","SDN","SUR","SWE","CHE","SYR","TJK","THA","TLS","TGO","TON","TTO","TUN","TUR","TKM","TUV","UGA","UKR","ARE","GBR","TZA","USA","URY","UZB","VUT","VEN","VNM","YEM","ZMB","ZWE"];
+    const monthNames = ["En", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
     function norm(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 
-    // --- CARGA DE DATOS ---
-    try {
-      const savedContent = document.getElementById('saved-data').textContent;
-      if(savedContent.trim()) {
-        const parsed = JSON.parse(savedContent);
-        appState.countries = parsed.countries || {};
-        appState.cities = parsed.cities || [];
-        appState.trips = parsed.trips || [];
-        appState.pointSize = parsed.pointSize || 5;
-
-        // Migración: Asignar IDs a ciudades antiguas que no lo tengan
-        appState.cities.forEach(c => {
-            if(!c.id) c.id = Date.now() + Math.random(); 
-        });
-
-        // Asegurar IDs en viajes
-        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
+    // INICIALIZACIÓN
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.supabase === 'undefined') { alert("Error: Librería Supabase no cargada."); return; }
         
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // MAPA
+        document.getElementById('map').innerHTML = '';
+        map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([40, -3], 2);
+        L.control.zoom({ position: 'topleft' }).addTo(map); 
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO', subdomains: 'abcd', maxZoom: 19, crossOrigin: true }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, zIndex: 1000, crossOrigin: true }).addTo(map);
+
+        // GEOJSON
+        fetch(GEOJSON_URL).then(res => res.json()).then(data => {
+            data.features.forEach(f => {
+                const i3 = f.properties.ISO_A3 || f.properties.ADM0_A3;
+                const i2 = f.properties.ISO_A2;
+                if(i3 && i2) iso3to2[i3] = i2.toLowerCase();
+                if(i3 && f.properties.CONTINENT) countryContinents[i3] = f.properties.CONTINENT;
+            });
+            iso3to2['FRA']='fr'; iso3to2['NOR']='no';
+            countryContinents['FRA']='Europe'; countryContinents['NOR']='Europe';
+
+            populateCountryList(data);
+            geoJsonLayer = L.geoJSON(data, { style: styleFeature, onEachFeature: (f, l) => l.bindTooltip(getSpanishName(f.properties.ISO_A2, f.properties.NAME), {sticky:true, direction:'center', className:'country-tooltip'}) }).addTo(map);
+            
+            // CHECK SESSION
+            window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                if(session) loadAppState();
+                else document.getElementById('login-screen').style.display='flex';
+            });
+
+            window.supabaseClient.auth.onAuthStateChange((ev, session) => {
+                if(session) loadAppState();
+                else {
+                   document.getElementById('app-container').style.display='none';
+                   document.getElementById('login-screen').style.display='flex';
+                }
+            });
+        }).catch(console.error);
+    });
+
+    // --- FUNCIONES AUTH ---
+    async function loadAppState() {
+        const user = (await window.supabaseClient.auth.getUser()).data.user;
+        if (!user) return;
+
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('app-container').style.display='block';
+        if(map) map.invalidateSize();
+
+        const { data, error } = await window.supabaseClient.from('mapa_data').select('data').eq('user_id', user.id).single();
+        if(data && data.data) appState = data.data;
+        else appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
+
+        // Validar
+        appState.countries = appState.countries || {};
+        appState.cities = appState.cities || [];
+        appState.trips = appState.trips || [];
+        appState.pointSize = appState.pointSize || 5;
+        appState.trips.forEach((t, i) => { if (!t.tripId) t.tripId = Date.now() + i; });
+
         document.getElementById('pointSizeSlider').value = appState.pointSize;
         document.getElementById('pointSizeLabel').innerText = appState.pointSize;
-      }
-    } catch (e) { console.error("Error cargando estado", e); }
-
-    // --- INICIALIZAR MAPA ---
-    document.getElementById('map').innerHTML = '';
-    const map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([40, -3], 2);
-    L.control.zoom({ position: 'topleft' }).addTo(map); 
-    
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO', subdomains: 'abcd', maxZoom: 19, crossOrigin: true }).addTo(map);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, zIndex: 1000, crossOrigin: true }).addTo(map);
-
-    // --- CARGAR GEOJSON ---
-    fetch(GEOJSON_URL).then(res => res.json()).then(data => {
-        data.features.forEach(f => {
-            const i3 = f.properties.ISO_A3 || f.properties.ADM0_A3;
-            const i2 = f.properties.ISO_A2;
-            if(i3 && i2) iso3to2[i3] = i2.toLowerCase();
-            if (i3 && f.properties.CONTINENT) countryContinents[i3] = f.properties.CONTINENT;
-        });
-        iso3to2['FRA'] = 'fr'; iso3to2['NOR'] = 'no';
-        countryContinents['FRA'] = 'Europe'; countryContinents['NOR'] = 'Europe';
-        
-        populateCountryList(data);
-        
-        geoJsonLayer = L.geoJSON(data, {
-          style: styleFeature,
-          onEachFeature: (feature, layer) => {
-            const iso = feature.properties.ISO_A2;
-            const name = getSpanishName(iso, feature.properties.NAME);
-            layer.bindTooltip(name, { sticky: true, direction: 'center', className: 'country-tooltip' });
-          }
-        }).addTo(map);
-        
+        if(geoJsonLayer) geoJsonLayer.setStyle(styleFeature);
+        cityMarkers.forEach(m => map.removeLayer(m.marker));
+        cityMarkers=[];
         restoreCities();
-        renderManageCities(); 
-        renderManualDeleteList();
-        
-      }).catch(err => console.error("Error cargando mapa", err));
+        renderManageCities(); renderManualDeleteList(); updateStats(); 
+    }
 
-    // --- UI HELPERS ---
+    function toggleAuthMode() {
+        const t = document.getElementById('auth-title');
+        const b = document.getElementById('auth-submit-btn');
+        const l = document.querySelector('.auth-link');
+        if(t.innerText.includes('Iniciar')) {
+            t.innerText='Registrarse'; b.innerText='Crear Cuenta'; l.innerText='¿Ya tienes cuenta? Inicia Sesión';
+            b.onclick=()=>handleAuthSubmit(false);
+        } else {
+            t.innerText='Iniciar Sesión'; b.innerText='Entrar'; l.innerText='¿No tienes cuenta? Regístrate';
+            b.onclick=()=>handleAuthSubmit(true);
+        }
+    }
+
+    async function handleAuthSubmit(isLogin) {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        const btn = document.getElementById('auth-submit-btn');
+        const oldText = btn.innerText;
+        btn.innerText = "Cargando...";
+        if(!email || !password) { alert("Faltan datos"); btn.innerText=oldText; return; }
+        try {
+            let res;
+            if(isLogin) res = await window.supabaseClient.auth.signInWithPassword({email, password});
+            else res = await window.supabaseClient.auth.signUp({email, password});
+            if(res.error) { alert(res.error.message); btn.innerText=oldText; }
+        } catch(e) { alert("Error conexión"); btn.innerText=oldText; }
+    }
+
+    async function logoutUser() { await window.supabaseClient.auth.signOut(); location.reload(); }
+
+    async function saveToCloud() {
+        const user = (await window.supabaseClient.auth.getUser()).data.user;
+        if (!user) return;
+        const btn = document.querySelector('#top-right-tools button:nth-child(2)');
+        const old = btn.innerHTML;
+        btn.innerHTML = '<span>☁</span> <span>...</span>';
+        const { error } = await window.supabaseClient.from('mapa_data').upsert([{ user_id: user.id, data: appState }]);
+        if(error) alert("Error: " + error.message);
+        else setTimeout(() => btn.innerHTML = old, 1000);
+    }
+
+    // --- UI ---
     function togglePanel() { document.getElementById('controls').classList.toggle('collapsed'); }
     function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        if(tabId === 'tab-add') document.getElementById('btn-tab-add').classList.add('active');
-        if(tabId === 'tab-stats') document.getElementById('btn-tab-stats').classList.add('active');
-        if(tabId === 'tab-time') document.getElementById('btn-tab-time').classList.add('active');
+        if(tabId==='tab-add') document.getElementById('btn-tab-add').classList.add('active');
+        if(tabId==='tab-stats') document.getElementById('btn-tab-stats').classList.add('active');
+        if(tabId==='tab-time') document.getElementById('btn-tab-time').classList.add('active');
     }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     // --- MAPA HELPERS ---
-    function getSpanishName(iso, fallback) {
-        if (!iso || iso === "-99") return fallback;
-        try { return regionNames.of(iso); } catch (e) { return fallback; }
-    }
+    function getSpanishName(iso, fb) { if(!iso||iso==="-99") return fb; try { return regionNames.of(iso); } catch(e){ return fb; } }
     function getSovereignId(f) { return f.properties.ADM0_A3 || f.properties.ISO_A3; }
     function styleFeature(f) {
         const id = getSovereignId(f);
-        const color = appState.countries[id];
-        return { fillColor: color || '#fff', weight: 1, opacity: 1, color: '#999', fillOpacity: color ? 0.7 : 0 };
+        const c = appState.countries[id];
+        return { fillColor: c || '#fff', weight: 1, opacity: 1, color: '#999', fillOpacity: c ? 0.7 : 0 };
     }
-
-    // --- CIUDADES ---
     function createCityMarker(c) {
-        // Aseguramos que tenga ID
-        if(!c.id) c.id = Date.now() + Math.random();
-
-        const m = L.circleMarker([c.lat, c.lng], {
-            color: 'red', fillColor: '#f00', fillOpacity: 1, radius: appState.pointSize, weight: 1
-        }).addTo(map);
+        const m = L.circleMarker([c.lat, c.lng], { color: 'red', fillColor: '#f00', fillOpacity: 1, radius: appState.pointSize, weight: 1 }).addTo(map);
         m.bindTooltip(c.name, { direction: 'top', offset: [0, -5] });
-        
-        // Guardar marcador asociado al ID
-        cityMarkers[c.id] = m;
+        cityMarkers.push({ data: c, marker: m });
     }
+    function restoreCities() { appState.cities.forEach(c => createCityMarker(c)); }
     
-    function restoreCities() { 
-        appState.cities.forEach(c => createCityMarker(c)); 
-    }
-
-    let searchTimeout;
-    function debounceCitySearch() {
-      const q = document.getElementById('inputCity').value;
-      if(q.length < 3) return;
-      document.getElementById('loader').style.display = 'block';
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        // CAMBIO: Quitamos accept-language=es para que busque nombres nativos
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(q)}`)
-          .then(r => r.json())
-          .then(data => {
-             const l = document.getElementById('listCities'); l.innerHTML = '';
-             data.forEach(i => {
-                 if(i.type==='administrative'||i.class==='place'||i.type==='city'||i.type==='town') {
-                     const opt = document.createElement('option');
-                     // Usamos el nombre que devuelve la API (generalmente nativo o inglés internacional)
-                     let txt = i.name; 
-                     const c = i.address?.country || "";
-                     const r = i.address?.state || i.address?.region || "";
-                     if(r) txt+= `, ${r}`; if(c) txt+= `, ${c}`;
-                     opt.value = txt;
-                     opt.setAttribute('data-lat', i.lat); opt.setAttribute('data-lon', i.lon);
-                     opt.setAttribute('data-c', c); 
-                     opt.setAttribute('data-n', i.name); // Guardamos el nombre "crudo"
-                     l.appendChild(opt);
-                 }
-             });
-          }).finally(() => document.getElementById('loader').style.display = 'none');
-      }, 600);
-    }
-
+    // --- ADD/REMOVE ---
     function addCity() {
         const val = document.getElementById('inputCity').value;
         const list = document.getElementById('listCities');
         let sel;
-        // Búsqueda exacta en el datalist
-        for(let o of list.options) if(o.value === val) sel = o;
+        // Lógica mejorada de selección para ser insensible a acentos si la API devolvió la ciudad normalizada
+        for(let o of list.options) if(norm(o.value) === norm(val)) sel = o;
         
-        // Si no es exacta, búsqueda laxa
-        if(!sel) {
-            for(let o of list.options) if(norm(o.value) === norm(val)) sel = o;
-        }
-        
-        if(!sel) return alert("Selecciona una ciudad válida de la lista desplegable.");
-        
-        const cData = {
-            id: Date.now(), // ID ÚNICO
-            name: sel.getAttribute('data-n'), // Nombre tal cual vino de la API
-            lat: parseFloat(sel.getAttribute('data-lat')),
-            lng: parseFloat(sel.getAttribute('data-lon')),
-            country: sel.getAttribute('data-c')
-        };
-        
+        if(!sel) return; 
+        const cData = { name: sel.getAttribute('data-n'), lat: parseFloat(sel.getAttribute('data-lat')), lng: parseFloat(sel.getAttribute('data-lon')), country: sel.getAttribute('data-c') };
         appState.cities.push(cData);
-        appState.history.push({ type: 'city', id: cData.id });
-        
+        appState.history.push({ type: 'city', index: appState.cities.length - 1 });
         createCityMarker(cData);
-        updateStats();
-        renderManageCities();
+        updateStats(); renderManageCities();
         document.getElementById('inputCity').value = '';
     }
 
-    // --- RENDERIZADO GESTIÓN DE CIUDADES (Eliminar) ---
-    function renderManageCities() {
-        const l = document.getElementById('manageCityList'); l.innerHTML = '';
-        const f = document.getElementById('searchManage').value.toLowerCase(); // Filtro texto
+    // FUNCIÓN NUEVA: Permitir borrar ciudad específica
+    function deleteSpecificCity(index) {
+        if(!confirm("¿Eliminar " + appState.cities[index].name + "?")) return;
         
-        if(appState.cities.length === 0) { 
-            l.innerHTML='<li style="text-align:center;color:#777">Sin ciudades</li>'; 
-            return; 
+        // Eliminar marcador del mapa
+        if(cityMarkers[index] && cityMarkers[index].marker) {
+            map.removeLayer(cityMarkers[index].marker);
         }
 
-        // Creamos una copia para visualizar, filtrada por el texto de búsqueda
-        // PERO el borrado se hará por ID, así que no importa el índice
-        const filtered = appState.cities.filter(c => norm(`${c.name}, ${c.country}`).includes(norm(f)));
+        // Eliminar de los arrays
+        appState.cities.splice(index, 1);
+        cityMarkers.splice(index, 1);
 
-        filtered.forEach(c => {
-            const li = document.createElement('li'); 
-            li.className='list-item';
-            li.innerHTML = `<span>${c.name} <small>(${c.country})</small></span> <button class="btn-del btn-xs" onclick="delCity(${c.id})">Borrar</button>`;
-            l.appendChild(li);
+        // Actualizar UI y guardar para evitar "olvidos"
+        renderManageCities();
+        updateStats();
+        saveToCloud(); 
+    }
+
+    // FUNCIÓN NUEVA: Renderizar lista de ciudades
+    function renderManageCities() {
+        const list = document.getElementById('manageCityList');
+        list.innerHTML = '';
+        const filter = document.getElementById('searchManage').value.toLowerCase();
+        
+        appState.cities.forEach((c, i) => {
+            if(c.name.toLowerCase().includes(filter)) {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                // Añadimos botón de borrado específico
+                li.innerHTML = `<span>${c.name}</span> <button class="btn-del" onclick="deleteSpecificCity(${i})">🗑️</button>`;
+                list.appendChild(li);
+            }
         });
     }
 
-    function delCity(cityId) {
-        // Encontrar índice real en el array
-        const index = appState.cities.findIndex(c => c.id === cityId);
-        if (index === -1) return;
-
-        // Quitar marcador del mapa
-        if(cityMarkers[cityId]) {
-            map.removeLayer(cityMarkers[cityId]);
-            delete cityMarkers[cityId];
-        }
-
-        // Quitar del array
-        appState.cities.splice(index, 1);
-        
-        // Actualizar UI
-        renderManageCities();
-        updateStats();
-    }
-
-    // --- PAÍSES Y VIAJES ---
     function addFullTrip() {
         const val = document.getElementById('inputTripCountry').value;
         const list = document.getElementById('listCountries');
         let id = null, name = val;
         for(let o of list.options) if(norm(o.value) === norm(val)) { id = o.getAttribute('data-id'); name=o.value; break; }
-        
-        if(!id) return alert("Selecciona país válido.");
+        if(!id) return; 
         const m = parseInt(document.getElementById('inputTripMonth').value);
         const y = parseInt(document.getElementById('inputTripYear').value);
-        
-        const tripObj = { id:id, name:name, month:m, year:y, tripId: Date.now() };
+        const tripObj = { id, name, month:m, year:y, tripId: Date.now() };
         appState.trips.push(tripObj);
-        
         let createdCountry = false;
         if(!appState.countries[id]) {
              const hue = Math.floor(Math.random()*300)+30;
@@ -620,46 +482,69 @@
              renderManualDeleteList();
              createdCountry = true;
         }
-        appState.history.push({ type: 'trip', tripObj: tripObj, createdCountry: createdCountry });
+        appState.history.push({ type: 'trip', tripObj, createdCountry });
         updateStats();
         document.getElementById('inputTripCountry').value = '';
     }
 
-    // --- TIMELINE ---
-    function openTimeline() {
-        renderTimeline();
-        document.getElementById('timeline-modal').style.display = 'flex';
+    function undoAction() {
+        const last = appState.history.pop();
+        if(!last) return;
+        if(last.type === 'city') {
+             // Undo simple: borra el último. 
+             // Nota: Si el usuario borró manualmente una ciudad intermedia, el historial podría desincronizarse.
+             // Se recomienda usar el borrado manual para precisión.
+             const m = cityMarkers.pop();
+             if(m) map.removeLayer(m.marker);
+             appState.cities.pop();
+             renderManageCities();
+        } else if(last.type === 'country') {
+             delete appState.countries[last.id];
+             geoJsonLayer.resetStyle();
+             renderManualDeleteList();
+        } else if(last.type === 'trip') {
+            const idx = appState.trips.findIndex(t => t.tripId === last.tripObj.tripId);
+            if (idx !== -1) appState.trips.splice(idx, 1);
+            if(last.createdCountry) {
+                delete appState.countries[last.tripObj.id];
+                geoJsonLayer.resetStyle();
+                renderManualDeleteList();
+            }
+            if(document.getElementById('timeline-modal').style.display === 'flex') renderTimeline();
+        }
+        updateStats();
     }
-    
+
+    // --- TIMELINE ---
+    function openTimeline() { renderTimeline(); document.getElementById('timeline-modal').style.display = 'flex'; }
     function renderTimeline() {
         const c = document.getElementById('timeline-container'); c.innerHTML = '';
         if(appState.trips.length===0) { c.innerHTML='<div style="text-align:center;margin-top:50px;color:#777">Sin viajes.</div>'; return; }
-
+        
         const displayTrips = [...appState.trips].sort((a, b) => {
             if (b.year !== a.year) return b.year - a.year; 
             if (b.month !== a.month) return b.month - a.month; 
             return a.tripId - b.tripId; 
         });
-        
-        const visitCounts = {};
-        // Calcular número de visita ordenando cronológicamente ascendente primero
-        [...appState.trips].sort((a,b) => a.year - b.year || a.month - b.month).forEach(t => {
-            visitCounts[t.id] = (visitCounts[t.id] || 0) + 1;
-            t.visitOrder = visitCounts[t.id];
+        const chronoTrips = [...appState.trips].sort((a, b) => {
+            if (a.year !== b.year) return a.year - b.year;
+            if (a.month !== b.month) return a.month - b.month;
+            return a.tripId - b.tripId;
         });
+        const visitCounts = {};
+        chronoTrips.forEach(t => { visitCounts[t.id] = (visitCounts[t.id] || 0) + 1; t.visitOrder = visitCounts[t.id]; });
 
         let curY = null, blk = null;
         displayTrips.forEach(t => {
             if(t.year !== curY) {
                 curY = t.year;
                 blk = document.createElement('div'); blk.className='timeline-year-block';
-                const lbl = document.createElement('div'); lbl.className='timeline-year-label'; lbl.innerText=curY;
-                blk.appendChild(lbl); c.appendChild(blk);
+                blk.innerHTML = `<div class="timeline-year-label">${curY}</div>`;
+                c.appendChild(blk);
             }
             const ev = document.createElement('div'); ev.className='timeline-event';
             const flag = `https://flagcdn.com/24x18/${iso3to2[t.id]||'xx'}.png`;
             const countTxt = t.visitOrder > 1 ? `<span class="visit-count-tag">(${t.visitOrder}ª vez)</span>` : '';
-            
             ev.innerHTML = `
                <div class="timeline-dot"></div>
                <div class="timeline-card">
@@ -672,44 +557,14 @@
             blk.appendChild(ev);
         });
     }
-
     function delTrip(uid) {
-        if(!confirm("¿Borrar viaje?")) return;
+        if(!confirm("¿Borrar?")) return;
         const i = appState.trips.findIndex(t => t.tripId === uid);
-        if(i !== -1) {
-            appState.trips.splice(i, 1);
-            renderTimeline();
-            updateStats();
-        }
+        if(i !== -1) { appState.trips.splice(i, 1); renderTimeline(); updateStats(); }
     }
 
-    // --- EXPORT PDF ---
-    async function exportTimelinePDF() {
-        const el = document.getElementById('timeline-container');
-        if(!el || el.innerText.trim()==="") return alert("Nada que exportar");
-        const imgs = el.querySelectorAll('img');
-        await Promise.all(Array.from(imgs).map(async img => {
-            try {
-                const b = await (await fetch(img.src)).blob();
-                return new Promise(r => { const fr=new FileReader(); fr.onloadend=()=>{img.src=fr.result;r()}; fr.readAsDataURL(b); });
-            } catch(e){ return Promise.resolve(); }
-        }));
-        html2canvas(el, { backgroundColor: "#121212", scale: 2, useCORS: true }).then(cvs => {
-            const imgData = cvs.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
-            pdf.setFillColor(18,18,18); pdf.rect(0,0,w,imgH+(m*2),'F');
-            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
-            pdf.save('cronologia.pdf');
-        });
-    }
-
-    // --- ESTADÍSTICAS ---
-    function openStatsModal() {
-        document.getElementById('stats-modal').style.display = 'flex';
-        renderCharts();
-    }
-    
+    // --- STATS & EXPORT ---
+    function openStatsModal() { document.getElementById('stats-modal').style.display = 'flex'; renderCharts(); }
     function renderCharts() {
         const years = {}, conts = {}, cityCounts = {};
         appState.trips.forEach(t => years[t.year] = (years[t.year]||0)+1);
@@ -722,61 +577,58 @@
         appState.cities.forEach(c => { cityCounts[c.country] = (cityCounts[c.country]||0)+1; });
         const sortedCountries = Object.entries(cityCounts).sort((a,b) => b[1] - a[1]);
 
-        document.getElementById('stat-total-countries').innerText = Object.keys(appState.countries).length;
-        document.getElementById('stat-total-cities').innerText = appState.cities.length;
-        document.getElementById('stat-total-trips').innerText = appState.trips.length;
-
         if(myChartYears) myChartYears.destroy();
-        myChartYears = new Chart(document.getElementById('chartYears'), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(years).sort(),
-                datasets: [{ label: 'Viajes', data: Object.keys(years).sort().map(y=>years[y]), backgroundColor:'#007bff' }]
-            }
-        });
-
+        myChartYears = new Chart(document.getElementById('chartYears'), { type: 'bar', data: { labels: Object.keys(years).sort(), datasets: [{ label: 'Viajes', data: Object.keys(years).sort().map(y=>years[y]), backgroundColor:'#007bff' }] } });
         if(myChartContinents) myChartContinents.destroy();
-        myChartContinents = new Chart(document.getElementById('chartContinents'), {
-            type: 'pie',
-            data: {
-                labels: Object.keys(conts),
-                datasets: [{ 
-                    data: Object.values(conts), 
-                    backgroundColor: ['#4bc0c0','#ff6384','#36a2eb','#ffce56','#9966ff','#ff9f40','#c9cbcf'] 
-                }]
-            }
-        });
+        myChartContinents = new Chart(document.getElementById('chartContinents'), { type: 'pie', data: { labels: Object.keys(conts), datasets: [{ data: Object.values(conts), backgroundColor: ['#4bc0c0','#ff6384','#36a2eb','#ffce56','#9966ff','#ff9f40','#c9cbcf'] }] } });
 
         const tbody = document.getElementById('citiesTableBody');
         tbody.innerHTML = '';
         if(sortedCountries.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#777;">Sin ciudades</td></tr>';
-        else sortedCountries.forEach(([country, count]) => {
-            tbody.innerHTML += `<tr><td>${country}</td><td style="text-align:right;"><strong>${count}</strong></td></tr>`;
-        });
+        else sortedCountries.forEach(([country, count]) => { tbody.innerHTML += `<tr><td>${country}</td><td style="text-align:right;"><strong>${count}</strong></td></tr>`; });
+        
+        document.getElementById('stat-total-countries').innerText = Object.keys(appState.countries).length;
+        document.getElementById('stat-total-cities').innerText = appState.cities.length;
+        document.getElementById('stat-total-trips').innerText = appState.trips.length;
+        
+        // Aseguramos que la lista de borrado se actualice cuando se actualizan las estadísticas
+        renderManageCities();
     }
     
-    function exportStatsPDF() {
-        const el = document.getElementById('stats-content');
-        if(!el) return;
-        el.scrollTop = 0;
-        html2canvas(el, { backgroundColor: "#ffffff", scale: 2 }).then(cvs => {
-            const imgData = cvs.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
-            pdf.setFillColor(255,255,255); pdf.rect(0,0,w,imgH+(m*2),'F');
-            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
-            pdf.save('estadisticas.pdf');
-        });
+    // --- AUXILIARES ---
+    let searchTimeout;
+    function debounceCitySearch() {
+      const q = document.getElementById('inputCity').value;
+      if(q.length < 3) return;
+      document.getElementById('loader').style.display = 'block';
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        // CORRECCIÓN 3: Eliminado 'accept-language=es' para obtener nombres nativos (Malmo, etc)
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(q)}`)
+          .then(r => r.json()).then(data => {
+             const l = document.getElementById('listCities'); l.innerHTML = '';
+             data.forEach(i => {
+                 if(['administrative','place','city','town'].includes(i.type) || i.class==='place') {
+                     const opt = document.createElement('option');
+                     let txt = i.name; // Usamos el nombre tal cual viene de la API
+                     const c = i.address?.country || "";
+                     const r = i.address?.state || i.address?.region || "";
+                     if(r) txt+= `, ${r}`; if(c) txt+= `, ${c}`;
+                     opt.value = txt;
+                     opt.setAttribute('data-lat', i.lat); opt.setAttribute('data-lon', i.lon);
+                     opt.setAttribute('data-c', c); opt.setAttribute('data-n', i.name); // Guardamos nombre original
+                     l.appendChild(opt);
+                 }
+             });
+          }).finally(() => document.getElementById('loader').style.display = 'none');
+      }, 600);
     }
 
-    // --- GESTIÓN MANUAL ---
     function updatePointSize(val) {
         appState.pointSize = val;
         document.getElementById('pointSizeLabel').innerText = val;
-        // Iterar objeto de marcadores
-        Object.values(cityMarkers).forEach(m => m.setRadius(val));
+        cityMarkers.forEach(obj => obj.marker.setRadius(val));
     }
-
     function renderManualDeleteList() {
         const sel = document.getElementById('manualDeleteSelect');
         sel.innerHTML = '<option value="">Selecciona país...</option>';
@@ -787,7 +639,6 @@
             sel.appendChild(opt);
         });
     }
-    
     function manualAddCountry() {
         const val = document.getElementById('manualCountryInput').value;
         const list = document.getElementById('listCountries');
@@ -799,135 +650,93 @@
                 appState.countries[id] = `hsl(${hue}, 70%, 60%)`;
                 geoJsonLayer.resetStyle();
                 appState.history.push({ type: 'country', id: id });
-                renderManualDeleteList();
-                updateStats();
+                renderManualDeleteList(); updateStats();
             }
         } else alert("País no encontrado.");
         document.getElementById('manualCountryInput').value='';
     }
-
     function manualDeleteCountry() {
         const id = document.getElementById('manualDeleteSelect').value;
-        if(!id) return;
-        if(!confirm("¿SEGURO? Se borrarán todas las ciudades y viajes de este país.")) return;
-        
+        if(!id || !confirm("¿SEGURO?")) return;
         delete appState.countries[id];
         geoJsonLayer.resetStyle();
-        
-        // Borrar viajes asociados
         appState.trips = appState.trips.filter(t => t.id !== id);
-        
-        // Borrar ciudades asociadas (comparando nombre de país aproximado)
-        const countryName = countryNames[id];
-        // Filtramos ciudades a mantener
-        const citiesToKeep = [];
-        appState.cities.forEach(c => {
-             // Si el nombre del país coincide, lo borramos del mapa y no lo guardamos
-             if(countryName && c.country && norm(c.country).includes(norm(countryName))) {
-                 if(cityMarkers[c.id]) {
-                     map.removeLayer(cityMarkers[c.id]);
-                     delete cityMarkers[c.id];
-                 }
-             } else {
-                 citiesToKeep.push(c);
+        const selText = document.getElementById('manualDeleteSelect').options[document.getElementById('manualDeleteSelect').selectedIndex].text;
+        for(let i=appState.cities.length-1; i>=0; i--) {
+             if(appState.cities[i].country && (appState.cities[i].country === selText || appState.cities[i].country.includes(selText))) {
+                 map.removeLayer(cityMarkers[i].marker);
+                 appState.cities.splice(i, 1);
+                 cityMarkers.splice(i, 1);
              }
-        });
-        appState.cities = citiesToKeep;
-        
-        updateStats();
-        renderManageCities();
-        renderManualDeleteList();
+        }
+        updateStats(); renderManageCities(); renderManualDeleteList();
     }
-    
     function factoryReset() {
         if(!confirm("¡ATENCIÓN! ¿Borrar TODOS los datos?")) return;
         appState = { countries: {}, cities: [], trips: [], history: [], pointSize: 5 };
         geoJsonLayer.resetStyle();
-        
-        Object.values(cityMarkers).forEach(m => map.removeLayer(m));
-        cityMarkers = {};
-        
+        cityMarkers.forEach(m => map.removeLayer(m.marker));
+        cityMarkers = [];
         document.getElementById('pointSizeSlider').value = 5;
         document.getElementById('pointSizeLabel').innerText = 5;
-        updateStats();
-        renderManageCities();
-        renderManualDeleteList();
+        updateStats(); renderManageCities(); renderManualDeleteList();
     }
-
     function populateCountryList(data) {
       const l = document.getElementById('listCountries');
       const feats = [];
       data.features.forEach(f => {
           const id = getSovereignId(f);
           const name = getSpanishName(f.properties.ISO_A2, f.properties.NAME);
-          if(id && UN_MEMBERS.includes(id)) {
-              countryNames[id] = name;
-              feats.push({id, name});
-          }
+          if(id && UN_MEMBERS.includes(id)) { countryNames[id] = name; feats.push({id, name}); }
       });
       if(countryNames['FRA']) countryNames['FRA']='Francia';
       feats.sort((a,b)=>a.name.localeCompare(b.name));
       const seen = new Set();
       feats.forEach(c => {
-          if(!seen.has(c.id)){
-             const o = document.createElement('option');
-             o.value = c.name; o.setAttribute('data-id',c.id);
-             l.appendChild(o);
-             seen.add(c.id);
-          }
+          if(!seen.has(c.id)){ const o=document.createElement('option'); o.value=c.name; o.setAttribute('data-id',c.id); l.appendChild(o); seen.add(c.id); }
       });
     }
-
-    function undoAction() {
-        const last = appState.history.pop();
-        if(!last) return alert("Nada que deshacer");
-        
-        if(last.type === 'city') {
-             // Borrar por ID guardado en histórico
-             if(last.id) delCity(last.id);
-             
-        } else if(last.type === 'country') {
-             delete appState.countries[last.id];
-             geoJsonLayer.resetStyle();
-             renderManualDeleteList();
-             
-        } else if(last.type === 'trip') {
-            const idx = appState.trips.findIndex(t => t.tripId === last.tripObj.tripId);
-            if (idx !== -1) appState.trips.splice(idx, 1);
-            if(last.createdCountry) {
-                delete appState.countries[last.tripObj.id];
-                geoJsonLayer.resetStyle();
-                renderManualDeleteList();
-            }
-            renderTimeline();
-        }
-        updateStats();
-    }
-
-    function saveMap() {
-        try {
-            const clone = document.documentElement.cloneNode(true);
-            clone.querySelector('#saved-data').textContent = JSON.stringify(appState);
-            const mDiv = clone.querySelector('#map'); mDiv.innerHTML=''; mDiv.removeAttribute('class');
-            clone.querySelector('#timeline-modal').style.display = 'none';
-            clone.querySelector('#stats-modal').style.display = 'none';
-            const blob = new Blob(['<!DOCTYPE html>\n'+clone.outerHTML], {type:'text/html'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'mi_mapa_viajes.html';
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch(e) { alert("Error al guardar"); }
-    }
     
+    function exportJSON() {
+        const json = JSON.stringify(appState, null, 2); 
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'travel_data_backup.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
     function exportMapImage() {
         const b = event.target; const txt = b.innerText; b.innerText="⏳";
         html2canvas(document.getElementById('map'), {useCORS:true, allowTaint:false}).then(c => {
             const l = document.createElement('a'); l.download='mapa.png'; l.href=c.toDataURL(); l.click(); b.innerText=txt;
         });
     }
+    async function exportTimelinePDF() {
+        const el = document.getElementById('timeline-container');
+        const imgs = el.querySelectorAll('img');
+        await Promise.all(Array.from(imgs).map(async img => { try { const b = await (await fetch(img.src)).blob(); return new Promise(r => { const fr=new FileReader(); fr.onloadend=()=>{img.src=fr.result;r()}; fr.readAsDataURL(b); }); } catch(e){ return Promise.resolve(); } }));
+        html2canvas(el, { backgroundColor: "#121212", scale: 2, useCORS: true }).then(cvs => {
+            const imgData = cvs.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
+            pdf.setFillColor(18,18,18); pdf.rect(0,0,w,imgH+(m*2),'F');
+            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
+            pdf.save('cronologia.pdf');
+        });
+    }
+    function exportStatsPDF() {
+        const el = document.getElementById('stats-content'); el.scrollTop = 0;
+        html2canvas(el, { backgroundColor: "#ffffff", scale: 2 }).then(cvs => {
+            const imgData = cvs.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const w = 210, m = 15, imgW = w-(m*2), imgH = cvs.height*imgW/cvs.width, pdf = new jsPDF('p','mm',[w,imgH+(m*2)]);
+            pdf.setFillColor(255,255,255); pdf.rect(0,0,w,imgH+(m*2),'F');
+            pdf.addImage(imgData,'PNG',m,m,imgW,imgH);
+            pdf.save('estadisticas.pdf');
+        });
+    }
   </script>
-
 </body>
 </html>
